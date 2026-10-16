@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#ff7a59">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Burger Chaos : touche, tire et chatouille Gaston, le burger vivant. 160 réactions à découvrir !">
+<title>Burger Chaos — Gaston, le burger vivant</title>
+<style>
+:root{--ink:#4a2a1a;--pop:#ff5c8a;--sun:#ffd23a;--cream:#fff8ec}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:#ff8a5c;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+body{position:fixed;inset:0;width:100%}
+#app{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:pointer}
+#world{position:absolute;inset:0;will-change:transform}
+#bg{position:absolute;inset:-25%;background:
+ radial-gradient(circle at 20% 22%,#ffe56b 0,transparent 38%),
+ radial-gradient(circle at 82% 30%,#ff5c8a 0,transparent 42%),
+ radial-gradient(circle at 50% 95%,#7b5cff 0,transparent 48%),
+ linear-gradient(160deg,#ff9a5a,#ff5c8a 52%,#6a5cff);animation:drift 50s linear infinite}
+@keyframes drift{from{transform:rotate(0) scale(1.05)}to{transform:rotate(360deg) scale(1.05)}}
+#floaters{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#floaters span{position:absolute;bottom:-12%;font-size:clamp(22px,5vw,44px);opacity:.35;animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-125vh) rotate(360deg)}}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#svg{width:min(96vw,calc(80vh*.7692));width:min(96vw,calc(80dvh*.7692));aspect-ratio:400/520;height:auto;overflow:visible;pointer-events:auto;touch-action:none;margin-top:4vh}
+#svg *{-webkit-user-select:none;user-select:none}
+#fx{position:absolute;inset:0;pointer-events:none}
+#bubble{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 62px);transform:translate(-50%,-10px) scale(.6);opacity:0;pointer-events:none;background:#fff;border:4px solid var(--ink);border-radius:22px;padding:8px 16px;font-weight:900;font-size:clamp(16px,4.4vw,26px);max-width:84vw;text-align:center;box-shadow:0 6px 0 rgba(74,42,26,.35);transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .15s;z-index:5}
+#bubble.show{opacity:1;transform:translate(-50%,0) scale(1)}
+#flash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .45s;z-index:4}
+#disco{position:absolute;inset:-30%;pointer-events:none;opacity:0;transition:opacity .4s;mix-blend-mode:screen;z-index:3;background:conic-gradient(from 0deg,#ff2d92,#ffe600,#00e5ff,#7c4dff,#ff2d92);filter:blur(30px);animation:drift 3s linear infinite}
+#disco.on{opacity:.45}
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-right,0px) + 12px) 0 calc(env(safe-area-inset-left,0px) + 12px);z-index:10;pointer-events:none;touch-action:none}
+#hud>*{pointer-events:auto}
+.pill{display:inline-flex;align-items:center;gap:8px;border:none;background:#fff;color:var(--ink);font:900 clamp(15px,4vw,19px) "Trebuchet MS",system-ui,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 5px 0 rgba(74,42,26,.35);cursor:pointer;touch-action:manipulation;min-height:44px}
+.pill:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(74,42,26,.35)}
+.round{width:48px;height:48px;padding:0;justify-content:center;font-size:22px;border-radius:50%}
+#hud .right{display:flex;gap:10px}
+#cnt b{color:var(--pop)}
+#toast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translate(-50%,30px);opacity:0;background:var(--ink);color:#fff;border-radius:18px;padding:10px 18px;font-weight:800;font-size:clamp(14px,3.8vw,18px);text-align:center;max-width:92vw;z-index:12;pointer-events:none;transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .25s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.sec{background:linear-gradient(90deg,#7b5cff,#ff5c8a)}
+#codex{position:absolute;inset:0;z-index:30;display:none;background:rgba(40,16,40,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:calc(env(safe-area-inset-top,0px) + 10px) 10px calc(env(safe-area-inset-bottom,0px) + 10px)}
+#codex.open{display:flex}
+.sheet{margin:auto;width:min(620px,100%);height:100%;max-height:900px;background:var(--cream);border-radius:26px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 14px 0 rgba(0,0,0,.2)}
+.sh-head{padding:14px 16px 8px;display:flex;align-items:center;gap:10px}
+.sh-head h2{margin:0;font-size:clamp(18px,5vw,24px);flex:1}
+.sh-bar{height:12px;margin:0 16px;background:#f0dcc0;border-radius:99px;overflow:hidden}
+.sh-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd23a,#ff5c8a);transition:width .4s}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 6px;scrollbar-width:none;touch-action:pan-x;flex:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:none;background:#f0dcc0;color:var(--ink);font:800 13px "Trebuchet MS",system-ui,sans-serif;padding:8px 12px;border-radius:99px;cursor:pointer;touch-action:manipulation;white-space:nowrap}
+.tab.on{background:var(--ink);color:#fff}
+.list{flex:1;overflow-y:auto;padding:6px 12px 12px;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.it{display:flex;gap:10px;align-items:center;background:#fff;border-radius:16px;padding:10px 12px;margin:7px 0;border:2px solid #f0dcc0}
+.it .ic{font-size:22px;width:30px;text-align:center;flex:none}
+.it .tx{flex:1;min-width:0}
+.it b{display:block;font-size:15px}
+.it span{display:block;font-size:13px;opacity:.85;line-height:1.3}
+.it em{display:block;font-size:12px;opacity:.65;font-style:normal;margin-top:2px}
+.it.found{border-color:#7ed957}
+.it.lock{opacity:.7}
+.it.secret.lock{background:#2c1b3a;color:#e9d9ff;border-color:#4a2f66}
+.it.secret.found{border-color:#b47bff}
+.rp{flex:none;border:none;background:var(--pop);color:#fff;width:40px;height:40px;border-radius:50%;font-size:16px;cursor:pointer;touch-action:manipulation}
+.sh-foot{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px 14px;border-top:2px solid #f0dcc0;align-items:center;justify-content:space-between}
+.sh-foot .pill{box-shadow:none;border:2px solid #f0dcc0;font-size:13px;min-height:38px;padding:6px 12px}
+.sh-foot .pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sh-foot .danger{color:#c0392b}
+#intro{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);text-align:center;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(74,42,26,.55);font-size:clamp(13px,3.5vw,17px);pointer-events:none;z-index:6;transition:opacity .6s}
+.reduced #bg,.reduced #floaters span{animation:none}
+@media (prefers-reduced-motion:reduce){#bg,#floaters span{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="world">
+    <div id="bg"></div>
+    <div id="floaters"></div>
+    <div id="stage">
+<svg id="svg" viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gaston, un burger vivant">
+<defs>
+ <linearGradient id="gBun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcb6e"/><stop offset="1" stop-color="#e08a2c"/></linearGradient>
+ <linearGradient id="gBunB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6bf62"/><stop offset="1" stop-color="#d9822b"/></linearGradient>
+ <linearGradient id="gPatty" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d4c2d"/><stop offset="1" stop-color="#5a2e19"/></linearGradient>
+ <filter id="fGold" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 .6 0 0 .1  .8 .75 0 0 .04  .1 .1 .15 0 0  0 0 0 1 0"/></filter>
+ <filter id="fRage" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1.2 .2 0 0 .1  .2 .45 0 0 0  .1 .1 .35 0 0  0 0 0 1 0"/></filter>
+ <filter id="fIce" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".5 .2 .3 0 0  .2 .7 .4 0 .05  .2 .3 .9 0 .15  0 0 0 1 0"/></filter>
+ <filter id="fRainbow" color-interpolation-filters="sRGB"><feColorMatrix id="hueRot" type="hueRotate" values="0"/></filter>
+</defs>
+<ellipse id="shadow" cx="200" cy="510" rx="130" ry="11" fill="rgba(60,20,40,.28)"/>
+<g id="ghosts" pointer-events="none"></g>
+<g id="burger">
+ <!-- jambes -->
+ <g id="p_legL" data-part="legL">
+  <path d="M158 438 L152 488" stroke="#4a2a1a" stroke-width="17" stroke-linecap="round" fill="none"/>
+  <path d="M158 438 L152 488" stroke="#f1c27d" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <ellipse cx="144" cy="497" rx="26" ry="12" fill="#e03b3b" stroke="#4a2a1a" stroke-width="5"/>
+  <rect x="116" y="436" width="64" height="76" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+ </g>
+ <g id="p_legR" data-part="legR">
+  <path d="M242 438 L248 488" stroke="#4a2a1a" stroke-width="17" stroke-linecap="round" fill="none"/>
+  <path d="M242 438 L248 488" stroke="#f1c27d" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <ellipse cx="256" cy="497" rx="26" ry="12" fill="#e03b3b" stroke="#4a2a1a" stroke-width="5"/>
+  <rect x="220" y="436" width="64" height="76" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+ </g>
+ <!-- bras -->
+ <g id="p_armL" data-part="armL">
+  <path d="M54 364 Q22 372 18 408" stroke="#4a2a1a" stroke-width="17" stroke-linecap="round" fill="none"/>
+  <path d="M54 364 Q22 372 18 408" stroke="#f1c27d" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <circle cx="18" cy="414" r="15" fill="#fff" stroke="#4a2a1a" stroke-width="5"/>
+  <circle cx="26" cy="392" r="36" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+ </g>
+ <g id="p_armR" data-part="armR">
+  <path d="M346 364 Q378 372 382 408" stroke="#4a2a1a" stroke-width="17" stroke-linecap="round" fill="none"/>
+  <path d="M346 364 Q378 372 382 408" stroke="#f1c27d" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <circle cx="382" cy="414" r="15" fill="#fff" stroke="#4a2a1a" stroke-width="5"/>
+  <circle cx="374" cy="392" r="36" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+ </g>
+ <!-- pain du bas -->
+ <g id="p_bunBottom" data-part="bunBottom">
+  <path d="M52 394 Q200 408 348 394 Q356 432 322 446 Q200 458 78 446 Q44 432 52 394Z" fill="url(#gBunB)" stroke="#4a2a1a" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M84 432 Q120 442 160 440" stroke="#fff" stroke-opacity=".35" stroke-width="6" stroke-linecap="round" fill="none"/>
+ </g>
+ <!-- steak -->
+ <g id="p_patty" data-part="patty">
+  <rect x="46" y="344" width="308" height="52" rx="24" fill="url(#gPatty)" stroke="#2e170b" stroke-width="5"/>
+  <path d="M96 354 L88 386 M148 354 L140 386 M200 354 L192 386 M252 354 L244 386 M304 354 L296 386" stroke="#2e170b" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
+  <path d="M70 356 Q200 349 330 356" stroke="#c98a5e" stroke-opacity=".5" stroke-width="4" stroke-linecap="round" fill="none"/>
+ </g>
+ <!-- fromage -->
+ <g id="p_cheese" data-part="cheese">
+  <path d="M40 322 L360 322 L352 342 L322 344 L314 374 Q304 384 294 374 L288 345 L124 347 L114 364 Q106 372 98 364 L94 346 L48 342Z" fill="#ffd23a" stroke="#b27800" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M60 330 L330 330" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round"/>
+  <g id="holes" display="none" fill="#e8a81a" stroke="#b27800" stroke-width="2"><ellipse cx="90" cy="333" rx="9" ry="6"/><ellipse cx="160" cy="336" rx="12" ry="7"/><ellipse cx="238" cy="332" rx="8" ry="5"/><ellipse cx="310" cy="334" rx="11" ry="6"/></g>
+ </g>
+ <!-- tomate -->
+ <g id="p_tomato" data-part="tomato">
+  <rect x="56" y="298" width="288" height="28" rx="14" fill="#ee4535" stroke="#7d1a10" stroke-width="5"/>
+  <g fill="#ffe3a8"><ellipse cx="104" cy="312" rx="7" ry="4"/><ellipse cx="152" cy="313" rx="7" ry="4"/><ellipse cx="200" cy="312" rx="7" ry="4"/><ellipse cx="248" cy="313" rx="7" ry="4"/><ellipse cx="296" cy="312" rx="7" ry="4"/></g>
+  <path d="M80 304 Q200 299 320 304" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round" fill="none"/>
+ </g>
+ <!-- salade -->
+ <g id="p_lettuce" data-part="lettuce">
+  <path d="M36 276 L364 276 Q372 294 352 300 Q338 310 322 298 Q306 310 288 299 Q270 311 252 299 Q234 311 216 300 Q198 312 180 300 Q162 311 144 299 Q126 310 108 299 Q90 310 74 298 Q56 304 44 296 Q28 290 36 276Z" fill="#62c443" stroke="#2f6b1c" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M52 288 Q80 296 100 288 T150 290 T200 291 T250 290 T300 289 T348 288" stroke="#a6ec7f" stroke-width="4" stroke-linecap="round" fill="none"/>
+ </g>
+ <!-- pain du haut + visage -->
+ <g id="p_bunTop" data-part="bunTop">
+  <path d="M48 282 C34 140 104 38 200 38 C296 38 366 140 352 282 Q200 300 48 282Z" fill="url(#gBun)" stroke="#4a2a1a" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M84 150 Q96 88 150 62" stroke="#fff" stroke-opacity=".45" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <g id="seeds" data-part="seed">
+   <g fill="#fff2cf" stroke="#b07a2a" stroke-width="1.6">
+    <ellipse cx="150" cy="78" rx="9" ry="5" transform="rotate(-25 150 78)"/><ellipse cx="205" cy="62" rx="9" ry="5" transform="rotate(8 205 62)"/>
+    <ellipse cx="258" cy="80" rx="9" ry="5" transform="rotate(30 258 80)"/><ellipse cx="108" cy="108" rx="9" ry="5" transform="rotate(-40 108 108)"/>
+    <ellipse cx="300" cy="112" rx="9" ry="5" transform="rotate(45 300 112)"/><ellipse cx="188" cy="98" rx="9" ry="5" transform="rotate(-10 188 98)"/><ellipse cx="236" cy="104" rx="9" ry="5" transform="rotate(20 236 104)"/>
+   </g>
+   <g fill="rgba(0,0,0,0)" style="pointer-events:all"><circle cx="150" cy="78" r="17"/><circle cx="205" cy="62" r="17"/><circle cx="258" cy="80" r="17"/><circle cx="108" cy="108" r="17"/><circle cx="300" cy="112" r="17"/></g>
+  </g>
+  <g id="face">
+   <g id="p_browL" data-part="brow"><path d="M124 132 Q150 118 176 132" fill="none" stroke="#4a2a1a" stroke-width="7" stroke-linecap="round"/><rect x="120" y="108" width="62" height="34" fill="rgba(0,0,0,0)" style="pointer-events:all"/></g>
+   <g id="p_browR" data-part="brow"><path d="M224 132 Q250 118 276 132" fill="none" stroke="#4a2a1a" stroke-width="7" stroke-linecap="round"/><rect x="218" y="108" width="62" height="34" fill="rgba(0,0,0,0)" style="pointer-events:all"/></g>
+   <g id="p_cheekL" data-part="cheekL"><ellipse id="blushL" cx="108" cy="208" rx="22" ry="14" fill="#ff6b86" opacity=".4"/><circle cx="108" cy="208" r="28" fill="rgba(0,0,0,0)" style="pointer-events:all"/></g>
+   <g id="p_cheekR" data-part="cheekR"><ellipse id="blushR" cx="292" cy="208" rx="22" ry="14" fill="#ff6b86" opacity=".4"/><circle cx="292" cy="208" r="28" fill="rgba(0,0,0,0)" style="pointer-events:all"/></g>
+   <g id="p_eyeL" data-part="eyeL"></g>
+   <g id="p_eyeR" data-part="eyeR"></g>
+   <g id="p_nose" data-part="nose">
+    <ellipse cx="200" cy="196" rx="11" ry="8" fill="#e9a36a" stroke="#4a2a1a" stroke-width="3.5"/>
+    <circle cx="196" cy="193" r="2.6" fill="#fff" opacity=".6"/>
+    <circle id="nosered" cx="200" cy="196" r="17" fill="#ff2d3d" stroke="#8c0f1a" stroke-width="4" display="none"/>
+    <circle cx="200" cy="196" r="22" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+   </g>
+   <g id="p_mouth" data-part="mouth">
+    <rect x="156" y="204" width="88" height="70" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+    <g transform="translate(200 228)" stroke="#4a2a1a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+     <path id="mouthPath" d="M-28 -2 Q0 26 28 -2" fill="none"/>
+     <path id="mouthExtra" d="" fill="none" stroke-width="2.5" display="none"/>
+     <path id="tongue" d="M-11 8 Q-13 34 0 36 Q13 34 11 8Z" fill="#ff7b9c" stroke-width="4" display="none"/>
+    </g>
+   </g>
+   <g id="tearL" display="none" pointer-events="none" transform="translate(140 202)"><path d="M0 0 Q-9 14 0 19 Q9 14 0 0Z" fill="#6ec6ff" stroke="#2b7fc4" stroke-width="2.5"/></g>
+   <g id="tearR" display="none" pointer-events="none" transform="translate(260 202)"><path d="M0 0 Q-9 14 0 19 Q9 14 0 0Z" fill="#6ec6ff" stroke="#2b7fc4" stroke-width="2.5"/></g>
+   <g id="sweat" display="none" pointer-events="none" transform="translate(312 112)"><path d="M0 0 Q-12 20 0 28 Q12 20 0 0Z" fill="#8fd6ff" stroke="#2b7fc4" stroke-width="3"/></g>
+   <text id="vein" display="none" pointer-events="none" x="296" y="116" font-size="38">💢</text>
+   <g id="acc_shades" display="none" pointer-events="none"><path d="M108 148 H192 V178 Q150 198 108 178Z M208 148 H292 V178 Q250 198 208 178Z" fill="#161616" stroke="#000" stroke-width="3"/><rect x="190" y="152" width="20" height="7" fill="#161616"/><path d="M118 156 L140 156 M218 156 L240 156" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round"/></g>
+   <g id="acc_mustache" display="none" pointer-events="none"><path d="M200 214 Q172 192 136 214 Q164 228 200 219 Q236 228 264 214 Q228 192 200 214Z" fill="#3a2418" stroke="#1d110a" stroke-width="3"/></g>
+   <g id="acc_crown" display="none" pointer-events="none"><path d="M136 62 L146 8 L174 38 L200 -2 L226 38 L254 8 L264 62Z" fill="#ffd23a" stroke="#a66d00" stroke-width="5" stroke-linejoin="round"/><circle cx="146" cy="8" r="6" fill="#ff5c8a"/><circle cx="200" cy="-2" r="7" fill="#5cf2c0"/><circle cx="254" cy="8" r="6" fill="#6aa7ff"/></g>
+   <g id="acc_partyhat" display="none" pointer-events="none"><path d="M160 58 L200 -40 L240 58Z" fill="#ff5c8a" stroke="#4a2a1a" stroke-width="5" stroke-linejoin="round"/><path d="M174 30 L226 30 M184 6 L216 6" stroke="#ffd23a" stroke-width="7" stroke-linecap="round"/><circle cx="200" cy="-42" r="10" fill="#5cf2c0" stroke="#4a2a1a" stroke-width="4"/></g>
+   <g id="acc_halo" display="none" pointer-events="none"><ellipse cx="200" cy="12" rx="52" ry="11" fill="none" stroke="#ffd23a" stroke-width="8"/></g>
+   <g id="acc_tophat" display="none" pointer-events="none"><rect x="150" y="-26" width="100" height="62" rx="6" fill="#1c1c24" stroke="#000" stroke-width="4"/><ellipse cx="200" cy="38" rx="82" ry="12" fill="#1c1c24" stroke="#000" stroke-width="4"/><rect x="150" y="14" width="100" height="14" fill="#c0392b"/></g>
+  </g>
+ </g>
+</g>
+</svg>
+      <div id="bubble"></div>
+    </div>
+    <canvas id="fx"></canvas>
+  </div>
+  <div id="disco"></div>
+  <div id="flash"></div>
+</div>
+<div id="hud">
+  <button class="pill" id="cnt" aria-label="Ouvrir le carnet des réactions">📖 <b id="cntN">0</b> / <span id="cntT">160</span></button>
+  <div class="right">
+    <button class="pill round" id="btnMusic" aria-label="Lancer une réaction musicale">🎵</button>
+    <button class="pill round" id="btnSound" aria-label="Activer ou couper le son">🔊</button>
+  </div>
+</div>
+<div id="intro">Touche, tire, secoue Gaston ! 🍔</div>
+<div id="toast"></div>
+<div id="codex" role="dialog" aria-label="Carnet des réactions">
+  <div class="sheet">
+    <div class="sh-head"><h2>📖 Carnet de Gaston</h2><button class="pill round" id="cxClose" aria-label="Fermer">✕</button></div>
+    <div class="sh-bar"><i id="cxBar"></i></div>
+    <div class="tabs" id="cxTabs"></div>
+    <div class="list" id="cxList"></div>
+    <div class="sh-foot">
+      <button class="pill" id="optSound">🔊 Son</button>
+      <button class="pill" id="optMotion">🐢 Animations réduites</button>
+      <button class="pill danger" id="optReset">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+<noscript><p style="position:fixed;inset:0;display:grid;place-items:center;background:#fff;font:20px sans-serif;text-align:center;padding:20px">Burger Chaos a besoin de JavaScript pour fonctionner.</p></noscript>
+
+<script>
+(()=>{
+'use strict';
+/* ============================================================
+   BURGER CHAOS — Gaston, le burger vivant
+   Un seul fichier, sans dépendance. Sons générés avec WebAudio.
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pickOf=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const nowMs=()=>performance.now();
+const easeIO=q=>q<.5?2*q*q:1-Math.pow(-2*q+2,2)/2;
+const easeOut=q=>1-Math.pow(1-q,3);
+const lin=q=>q;
+const CANCEL={cancel:true};
+
+/* ---------- sauvegarde ---------- */
+const KEY='burgerchaos.v1';
+let SAVE={found:{},sound:true,reduced:null};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object')SAVE=Object.assign(SAVE,s);if(!SAVE.found||typeof SAVE.found!=='object')SAVE.found={};}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(SAVE))}catch(e){}}
+const mq=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)'))||{matches:false};
+const RED=()=>SAVE.reduced===null?!!mq.matches:!!SAVE.reduced;
+const MOT=()=>RED()?.55:1;
+
+/* ---------- SONS (WebAudio, tout est synthétisé) ---------- */
+const Snd=(()=>{
+  let ac=null,master=null,nbuf=null;
+  const api={on:SAVE.sound!==false};
+  function init(){
+    if(ac)return;
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      ac=new AC();const comp=ac.createDynamicsCompressor();master=ac.createGain();master.gain.value=.85;
+      master.connect(comp);comp.connect(ac.destination);
+      nbuf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const d=nbuf.getChannelData(0);
+      for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    }catch(e){ac=null}
+  }
+  api.unlock=()=>{init();if(ac&&ac.state==='suspended'){try{ac.resume()}catch(e){}}};
+  const ok=()=>ac&&api.on;
+  const mf=m=>440*Math.pow(2,(m-69)/12);
+  function tone(f,d,o){
+    o=o||{};if(!ok())return;
+    const t=ac.currentTime+(o.at||0);const osc=ac.createOscillator();const g=ac.createGain();
+    osc.type=o.type||'sine';osc.frequency.setValueAtTime(f,t);
+    if(o.to)osc.frequency.exponentialRampToValueAtTime(Math.max(20,o.to),t+d*(o.glide||1));
+    const v=o.v===undefined?.25:o.v;
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+Math.min(.012,d/3));g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    if(o.vib){const l=ac.createOscillator(),lg=ac.createGain();l.frequency.value=o.vibRate||6;lg.gain.value=o.vib;l.connect(lg);lg.connect(osc.frequency);l.start(t);l.stop(t+d+.05);}
+    osc.connect(g);g.connect(master);osc.start(t);osc.stop(t+d+.05);
+  }
+  function noise(d,o){
+    o=o||{};if(!ok())return;
+    const t=ac.currentTime+(o.at||0);const s=ac.createBufferSource();s.buffer=nbuf;s.loop=true;
+    const fl=ac.createBiquadFilter();fl.type=o.type||'bandpass';fl.frequency.setValueAtTime(o.f||1000,t);
+    if(o.to)fl.frequency.exponentialRampToValueAtTime(Math.max(30,o.to),t+d);fl.Q.value=o.q||1;
+    const g=ac.createGain();const v=o.v===undefined?.25:o.v;
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+Math.min(.02,d/3));g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    s.connect(fl);fl.connect(g);g.connect(master);s.start(t,Math.random()*.5);s.stop(t+d+.05);
+  }
+  const FORM={a:[800,1250],o:[500,900],i:[310,2300],u:[340,700],e:[550,1800]};
+  function vox(f,d,vw,o){
+    o=o||{};if(!ok())return;
+    const t=ac.currentTime+(o.at||0);const osc=ac.createOscillator();osc.type='sawtooth';osc.frequency.setValueAtTime(f,t);
+    if(o.to)osc.frequency.linearRampToValueAtTime(o.to,t+d);
+    const g=ac.createGain();const v=o.v===undefined?1:o.v;
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.02);
+    g.gain.setValueAtTime(v,t+Math.max(.03,d-.06));g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    (FORM[vw]||FORM.a).forEach((ff,i)=>{const b=ac.createBiquadFilter();b.type='bandpass';b.frequency.value=ff;b.Q.value=i?6:4;const gg=ac.createGain();gg.gain.value=i?.7:1.2;osc.connect(b);b.connect(gg);gg.connect(g);});
+    g.connect(master);osc.start(t);osc.stop(t+d+.05);
+  }
+  const SFX={
+    boing:(p=1)=>tone(170*p,.6,{to:440*p,glide:.35,vib:40,vibRate:16,v:.4}),
+    pop:(p=1)=>{tone(900*p,.09,{to:180*p,v:.4});noise(.04,{f:3000,v:.2})},
+    squeak:(p=1)=>{tone(1400*p,.1,{to:2300*p,type:'triangle',v:.25});tone(1900*p,.09,{to:1300*p,type:'triangle',v:.2,at:.11})},
+    splat:()=>{noise(.22,{f:900,to:200,q:.7,v:.5});tone(180,.18,{to:50,v:.4})},
+    whoosh:(p=1)=>noise(.45,{f:300*p,to:2800*p,q:.8,v:.35}),
+    zap:()=>{tone(1800,.28,{to:80,type:'square',v:.15});noise(.2,{f:5000,type:'highpass',v:.15})},
+    up:(p=1)=>tone(350*p,.5,{to:1700*p,v:.3}),
+    down:(p=1)=>tone(1500*p,.55,{to:200*p,v:.3}),
+    stretch:()=>tone(110,.7,{type:'sawtooth',to:440,v:.14,vib:12,vibRate:9}),
+    snap:()=>{noise(.06,{f:4000,type:'highpass',v:.4});tone(900,.12,{to:90,v:.3})},
+    clap:()=>{noise(.08,{f:1500,q:.8,v:.5});noise(.1,{f:2200,q:.8,v:.3,at:.02})},
+    laugh:(n=4,p=1)=>{for(let i=0;i<n;i++)vox((270+rnd(0,40))*p-i*8,.11,i%2?'o':'a',{at:i*.15})},
+    giggle:(n=5)=>{for(let i=0;i<n;i++)vox(620+rnd(0,140),.07,'i',{at:i*.09,v:.8})},
+    gasp:()=>{noise(.3,{f:1200,to:3000,q:.6,v:.35});vox(500,.25,'a',{to:700,at:.05,v:.6})},
+    yawn:()=>vox(330,1.2,'a',{to:150}),
+    snore:()=>{for(let i=0;i<2;i++){noise(.5,{f:180,q:2,v:.35,at:i*1.1});tone(70,.5,{type:'sawtooth',v:.12,at:i*1.1})}},
+    honk:(p=1)=>{tone(233*p,.3,{type:'sawtooth',v:.2});tone(349*p,.3,{type:'sawtooth',v:.14})},
+    chime:()=>[72,76,79,84].forEach((m,i)=>tone(mf(m),.35,{at:i*.08,v:.18})),
+    magic:()=>{for(let i=0;i<7;i++)tone(1000+i*230+rnd(0,80),.18,{at:i*.06,v:.13})},
+    coin:()=>{tone(988,.07,{type:'square',v:.14});tone(1319,.35,{type:'square',v:.14,at:.07})},
+    sad:()=>{[311,294,277].forEach((f,i)=>tone(f,.38,{type:'sawtooth',v:.14,at:i*.4,vib:6,vibRate:5}));tone(262,.9,{type:'sawtooth',to:200,v:.14,at:1.2,vib:8,vibRate:6})},
+    kick:(at=0)=>tone(160,.3,{to:40,v:.75,at}),
+    snare:(at=0)=>{noise(.18,{f:1800,q:.5,v:.4,at});tone(200,.1,{to:120,type:'triangle',v:.3,at})},
+    hat:(at=0)=>noise(.05,{f:7500,type:'highpass',v:.18,at}),
+    bass:(m=36,at=0)=>tone(mf(m),.25,{type:'sawtooth',v:.22,at}),
+    buzz:()=>tone(95,.5,{type:'square',v:.15,vib:10,vibRate:40}),
+    ding:(p=1)=>{tone(1568*p,.7,{v:.22});tone(3136*p,.5,{v:.07})},
+    gong:()=>{[110,164,233,271].forEach(f=>tone(f,2,{v:.18}));noise(.5,{f:300,v:.2})},
+    pouet:()=>{tone(130,.25,{type:'sawtooth',to:70,vib:20,vibRate:30,v:.3});noise(.15,{f:500,v:.2})},
+    drip:()=>tone(1200,.1,{to:500,v:.2}),
+    hiss:()=>noise(.9,{f:6000,type:'highpass',q:.5,v:.18}),
+    sizzle:()=>noise(.9,{f:5500,type:'highpass',q:.5,v:.14}),
+    crunch:()=>{for(let i=0;i<3;i++)noise(.06,{f:2500,q:.7,v:.4,at:i*.08})},
+    kiss:()=>{noise(.05,{f:3000,v:.2});tone(1000,.12,{to:500,v:.2,at:.04})},
+    ooh:()=>vox(300,.8,'u',{to:380}),
+    aah:()=>vox(380,.9,'a'),
+    mmm:()=>vox(200,.7,'u'),
+    hmm:()=>{vox(180,.35,'o',{to:230});vox(230,.35,'o',{to:200,at:.4})},
+    grr:()=>{vox(90,.6,'o');noise(.5,{f:300,v:.2})},
+    burp:()=>{tone(80,.35,{type:'sawtooth',to:50,vib:35,vibRate:55,v:.4});noise(.3,{f:200,v:.25})},
+    brr:()=>tone(200,.5,{type:'sawtooth',to:150,v:.18,vib:100,vibRate:30}),
+    tick:()=>tone(1200,.04,{type:'square',v:.18}),
+    tock:()=>tone(800,.05,{type:'square',v:.18}),
+    stomp:()=>{tone(90,.2,{to:40,v:.6});noise(.1,{f:200,v:.4})},
+    tada:()=>{[60,64,67,72].forEach((m,i)=>tone(mf(m+12),.22,{type:'sawtooth',v:.12,at:i*.1}));tone(mf(84),.8,{type:'sawtooth',v:.12,at:.4});noise(.4,{f:3000,type:'highpass',v:.1,at:.4})},
+    party:()=>{tone(700,.6,{to:1900,type:'square',v:.08});noise(.3,{f:2500,to:5000,v:.25,at:.4})},
+    hic:()=>tone(500,.08,{to:900,type:'triangle',v:.3}),
+    sniff:()=>{noise(.12,{f:3500,to:5000,v:.2});noise(.12,{f:3500,to:5200,v:.2,at:.16})},
+    slurp:()=>{tone(300,.3,{to:900,v:.25});tone(900,.2,{to:200,v:.25,at:.3})},
+    wow:()=>vox(300,.6,'o',{to:700}),
+    glass:()=>{for(let i=0;i<8;i++)tone(2400+rnd(0,2500),.2,{v:.08,at:i*.025,type:'triangle'})},
+    robot:()=>{for(let i=0;i<6;i++)tone(rnd(200,900),.07,{type:'square',v:.1,at:i*.08})}
+  };
+  api.play=(n,...a)=>{if(!ok())return;try{SFX[n]&&SFX[n](...a)}catch(e){}};
+  api.seq=(notes,bpm,o)=>{o=o||{};const beat=60/(bpm||120);let t=0;if(ok())for(const [m,b] of notes){if(m>0)tone(mf(m),b*beat*.92,{type:o.type||'square',v:o.v===undefined?.15:o.v,at:(o.at||0)+t});t+=b*beat;}let tt=0;for(const n of notes)tt+=n[1];return tt*beat*1000;};
+  api.vseq=(notes,bpm,vw,o)=>{o=o||{};const beat=60/(bpm||120);let t=0;if(ok())for(const [m,b] of notes){if(m>0)vox(mf(m),b*beat*.9,vw||'a',{at:t,v:o.v||.9});t+=b*beat;}let tt=0;for(const n of notes)tt+=n[1];return tt*beat*1000;};
+  api.beat=(pat,bpm)=>{const step=60/(bpm||110)/2;if(ok())[...pat].forEach((ch,i)=>{const at=i*step;if(ch==='k')SFX.kick(at);else if(ch==='s')SFX.snare(at);else if(ch==='h')SFX.hat(at);else if(ch==='b')SFX.bass(36,at);});return pat.length*step*1000;};
+  return api;
+})();
+
+/* ---------- PARTICULES ---------- */
+const FX=(()=>{
+  const cv=$('#fx'),g=cv.getContext('2d');let W=0,H=0,dpr=1;const P=[];
+  function resize(){dpr=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px';g.setTransform(dpr,0,0,dpr,0,0);}
+  resize();addEventListener('resize',resize);
+  const COL=['#ff5c8a','#ffd23a','#5cf2c0','#6aa7ff','#b47bff','#ff9a3a','#ffffff'];
+  const cnt=n=>RED()?Math.max(1,Math.ceil(n*.4)):n;
+  function add(o){const lim=RED()?150:380;if(P.length>lim)P.shift();P.push(Object.assign({x:0,y:0,vx:0,vy:0,g:0,life:1,age:0,rot:0,vr:0,size:10,fric:1,col:'#fff',kind:'rect',grow:0,ch:'',text:''},o));}
+  const api={
+    confetti(x,y,n=40,sp=1){n=cnt(n);for(let i=0;i<n;i++)add({kind:'rect',x,y,vx:rnd(-380,380)*sp,vy:rnd(-760,-150)*sp,g:900,size:rnd(7,13),rot:rnd(0,6),vr:rnd(-12,12),life:rnd(1.2,2.3),col:pickOf(COL),fric:.992});},
+    burst(x,y,col,n=12,sp=1){n=cnt(n);for(let i=0;i<n;i++){const a=rnd(0,6.28),s=rnd(80,380)*sp;add({kind:'circle',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-120,g:700,size:rnd(4,9),life:rnd(.6,1.3),col,fric:.99});}},
+    drops(x,y,col,n=14,sp=1){n=cnt(n);for(let i=0;i<n;i++)add({kind:'circle',x:x+rnd(-30,30),y:y+rnd(-10,10),vx:rnd(-260,260)*sp,vy:rnd(-520,-60)*sp,g:1100,size:rnd(5,12),life:rnd(.7,1.4),col});},
+    stars(x,y,n=10){n=cnt(n);for(let i=0;i<n;i++){const a=rnd(0,6.28),s=rnd(100,360);add({kind:'star',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:200,size:rnd(10,22),rot:rnd(0,6),vr:rnd(-6,6),life:rnd(.7,1.3),col:pickOf(['#ffd23a','#fff','#ffe98a'])});}},
+    emoji(ch,x,y,n=6,o){o=o||{};n=cnt(n);for(let i=0;i<n;i++)add({kind:'emoji',ch,x:x+rnd(-24,24),y:y+rnd(-24,24),vx:rnd(-160,160)*(o.sp||1),vy:rnd(-300,-60)*(o.sp||1)+(o.vy||0),g:o.g===undefined?300:o.g,size:rnd(24,40)*(o.s||1),life:rnd(1,1.9),vr:rnd(-3,3)});},
+    rain(ch,n=20,o){o=o||{};n=cnt(n);for(let i=0;i<n;i++)add({kind:'emoji',ch,x:rnd(0,W),y:rnd(-H*.9,-20),vx:rnd(-40,40),vy:rnd(60,220),g:o.g===undefined?160:o.g,size:rnd(24,46),life:rnd(2.4,3.8),vr:rnd(-2,2)});},
+    ring(x,y,col,size=20){add({kind:'ring',x,y,size,grow:rnd(140,200),col,life:.5});},
+    smoke(x,y,n=8){n=cnt(n);for(let i=0;i<n;i++)add({kind:'smoke',x:x+rnd(-20,20),y,vx:rnd(-40,40),vy:rnd(-140,-60),size:rnd(14,26),grow:rnd(30,60),life:rnd(.8,1.5),col:'#ffffff'});},
+    pop(text,x,y,col){add({kind:'text',text,x,y,vy:-70,size:clamp(W*.07,26,48),col:col||'#fff',life:.9,rot:rnd(-.18,.18)});},
+    slash(x1,y1,x2,y2){add({kind:'slash',x:x1,y:y1,vx:x2,vy:y2,life:.35,col:'#fff'});},
+    update(dt){for(let i=P.length-1;i>=0;i--){const p=P[i];p.age+=dt;if(p.age>=p.life){P.splice(i,1);continue;}p.vy+=p.g*dt;p.vx*=p.fric;p.vy*=p.fric;if(p.kind!=='slash'){p.x+=p.vx*dt;p.y+=p.vy*dt;}p.rot+=p.vr*dt;}},
+    draw(){
+      g.clearRect(0,0,W,H);
+      for(const p of P){
+        const q=p.age/p.life;const a=q>.65?1-(q-.65)/.35:1;g.globalAlpha=Math.max(0,a);
+        if(p.kind==='rect'){g.save();g.translate(p.x,p.y);g.rotate(p.rot);g.fillStyle=p.col;g.fillRect(-p.size/2,-p.size/4,p.size,p.size/2);g.restore();}
+        else if(p.kind==='circle'){g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.size,0,6.283);g.fill();}
+        else if(p.kind==='smoke'){g.fillStyle=p.col;g.globalAlpha=Math.max(0,a*.5);g.beginPath();g.arc(p.x,p.y,p.size+p.grow*p.age,0,6.283);g.fill();}
+        else if(p.kind==='star'){g.save();g.translate(p.x,p.y);g.rotate(p.rot);g.fillStyle=p.col;g.beginPath();for(let i=0;i<10;i++){const r=i%2?p.size*.45:p.size;const an=i*Math.PI/5-Math.PI/2;g.lineTo(Math.cos(an)*r,Math.sin(an)*r);}g.closePath();g.fill();g.restore();}
+        else if(p.kind==='emoji'){g.save();g.translate(p.x,p.y);g.rotate(p.rot);g.font=Math.round(p.size)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(p.ch,0,0);g.restore();}
+        else if(p.kind==='ring'){g.strokeStyle=p.col;g.lineWidth=Math.max(1,5*(1-q));g.beginPath();g.arc(p.x,p.y,p.size+p.grow*p.age,0,6.283);g.stroke();}
+        else if(p.kind==='text'){g.save();g.translate(p.x,p.y);g.rotate(p.rot);const sc=q<.15?.5+q/.15*.7:1.2-(q-.15)*.2;g.scale(sc,sc);g.font='900 '+Math.round(p.size)+'px "Trebuchet MS",system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineJoin='round';g.lineWidth=8;g.strokeStyle='#4a2a1a';g.strokeText(p.text,0,0);g.fillStyle=p.col;g.fillText(p.text,0,0);g.restore();}
+        else if(p.kind==='slash'){g.strokeStyle='#fff';g.lineWidth=8*(1-q);g.lineCap='round';g.beginPath();g.moveTo(p.x,p.y);g.lineTo(p.x+(p.vx-p.x)*Math.min(1,q*4),p.y+(p.vy-p.y)*Math.min(1,q*4));g.stroke();}
+      }
+      g.globalAlpha=1;
+    }
+  };
+  return api;
+})();
+
+/* ---------- LE BURGER : ressorts ---------- */
+const svg=$('#svg');
+const REST={x:0,y:0,r:0,sx:1,sy:1};
+const AX=['x','y','r','sx','sy'];
+// pivot x, pivot y, raideur, amortissement
+const PDEF={
+ root:[200,495,120,9],bunTop:[200,280,190,11],lettuce:[200,288,190,11],tomato:[200,312,190,11],cheese:[200,334,190,11],patty:[200,370,190,11],bunBottom:[200,422,190,11],
+ armL:[54,364,220,12],armR:[346,364,220,12],legL:[155,442,220,12],legR:[245,442,220,12],
+ eyeL:[150,165,260,14],eyeR:[250,165,260,14],mouth:[200,228,260,14],nose:[200,196,260,14],cheekL:[108,208,240,13],cheekR:[292,208,240,13],browL:[150,128,280,15],browR:[250,128,280,15]
+};
+const SP={};
+function eyeMarkup(s,cx){
+  return `<g transform="translate(${cx} 165)"><circle r="36" fill="rgba(0,0,0,0)" style="pointer-events:all"/>
+  <g id="e${s}_open"><ellipse rx="24" ry="28" fill="#fff" stroke="#3a2012" stroke-width="4"/><g id="e${s}_pup"><circle r="12" fill="#2b1a12"/><circle cx="4" cy="-5" r="4.5" fill="#fff"/></g></g>
+  <path id="e${s}_closed" d="M-20 2 Q0 22 20 2" fill="none" stroke="#3a2012" stroke-width="6" stroke-linecap="round" display="none"/>
+  <path id="e${s}_happy" d="M-20 10 Q0 -14 20 10" fill="none" stroke="#3a2012" stroke-width="6" stroke-linecap="round" display="none"/>
+  <path id="e${s}_spiral" d="M0 0 Q7 -2 7 5 Q4 13 -6 11 Q-17 6 -13 -7 Q-4 -19 11 -15 Q23 -8 21 7 Q16 21 0 22" fill="none" stroke="#3a2012" stroke-width="4" stroke-linecap="round" display="none"/>
+  <path id="e${s}_heart" d="M0 14 C-26 -4 -16 -22 0 -9 C16 -22 26 -4 0 14Z" fill="#ff3b6b" stroke="#8c1235" stroke-width="3" display="none"/>
+  <path id="e${s}_x" d="M-15 -15 L15 15 M15 -15 L-15 15" stroke="#3a2012" stroke-width="7" stroke-linecap="round" display="none"/>
+  <text id="e${s}_text" y="11" text-anchor="middle" font-size="32" font-weight="900" fill="#3a2012" display="none"></text></g>`;
+}
+$('#p_eyeL').innerHTML=eyeMarkup('L',150);
+$('#p_eyeR').innerHTML=eyeMarkup('R',250);
+for(const n in PDEF){
+  const [px,py,k,c]=PDEF[n];
+  SP[n]={n,el:n==='root'?$('#burger'):$('#p_'+n),px,py,k,c,v:Object.assign({},REST),w:{x:0,y:0,r:0,sx:0,sy:0},t:Object.assign({},REST),u:{x:0,y:0,r:0,sx:0,sy:0},spk:0,spc:0,spU:0,last:''};
+}
+const LAY=['bunTop','lettuce','tomato','cheese','patty','bunBottom'];
+const MID=['lettuce','tomato','cheese','patty'];
+const EYES=['eyeL','eyeR'];
+const CEN={root:[200,300],bunTop:[200,160],seed:[200,80],bunBottom:[200,422],lettuce:[200,288],tomato:[200,312],cheese:[200,334],patty:[200,370],armL:[22,400],armR:[378,400],legL:[150,470],legR:[250,470],eyeL:[150,165],eyeR:[250,165],mouth:[200,228],nose:[200,196],cheekL:[108,208],cheekR:[292,208],brow:[200,128]};
+
+function sPt(x,y){const m=svg.getScreenCTM&&svg.getScreenCTM();if(!m)return{x:innerWidth/2,y:innerHeight/2};return{x:m.a*x+m.c*y+m.e,y:m.b*x+m.d*y+m.f};}
+function toSvg(cx,cy){const m=svg.getScreenCTM&&svg.getScreenCTM();if(!m)return{x:200,y:260};const i=m.inverse();return{x:i.a*cx+i.c*cy+i.e,y:i.b*cx+i.d*cy+i.f};}
+const scaleU=()=>{const m=svg.getScreenCTM&&svg.getScreenCTM();return(m&&m.a>0)?m.a:1;};
+const at=n=>{const c=CEN[n]||CEN.root;return sPt(c[0],c[1]);};
+
+function hold(p,props,ms,sp){
+  const s=SP[p];if(!s)return;const t=nowMs(),m=MOT();
+  for(const a in props){if(!(a in REST))continue;s.t[a]=REST[a]+(props[a]-REST[a])*m;s.u[a]=t+ms;}
+  if(sp){s.spk=sp.k;s.spc=sp.c;s.spU=t+ms;}
+}
+function kick(p,props){const s=SP[p];if(!s)return;const m=MOT();for(const a in props)if(a in REST)s.w[a]+=props[a]*m;}
+function snap(p,props){const s=SP[p];if(!s)return;for(const a in props)if(a in REST){s.v[a]=props[a];s.w[a]=0;}}
+function pin(p,props){const s=SP[p];if(!s)return;for(const a in props)if(a in REST){s.t[a]=props[a];s.u[a]=Infinity;}}
+function unpin(p){const s=SP[p];if(!s)return;const t=nowMs();for(const a of AX)if(s.u[a]===Infinity)s.u[a]=t;}
+function setSpr(p,k,c,ms){const s=SP[p];if(!s)return;s.spk=k;s.spc=c;s.spU=nowMs()+ms;}
+
+function step(dt,now){
+  const h=dt/2;
+  for(const n in SP){
+    const s=SP[n];const ov=now<s.spU;const k=ov?s.spk:s.k,c=ov?s.spc:s.c;
+    for(const a of AX){
+      if(s.u[a]!==0&&now>s.u[a]){s.t[a]=REST[a];s.u[a]=0;}
+      let v=s.v[a],w=s.w[a];const t=s.t[a];
+      for(let i=0;i<2;i++){w+=(k*(t-v)-c*w)*h;v+=w*h;}
+      if(w>6000)w=6000;else if(w<-6000)w=-6000;
+      if(Math.abs(v-t)<.0008&&Math.abs(w)<.01){v=t;w=0;}
+      s.v[a]=v;s.w[a]=w;
+    }
+  }
+}
+
+/* ---------- expressions du visage (temporaires, expirent seules) ---------- */
+const DEF={mouth:'smile',tongue:0,eyes:'normal',eyeL:null,eyeR:null,eyeText:'?',pupils:'track',pscale:1,lids:0,brow:'none',blush:.4,tear:0,sweat:0,vein:0,nose:'normal',hideFace:0,shades:0,mustache:0,crown:0,partyhat:0,halo:0,tophat:0,holes:0,tint:null,disco:0};
+const EX={};
+const E=k=>{const e=EX[k];return(e&&nowMs()<e.u)?e.v:DEF[k];};
+function expr(o,ms){const u=nowMs()+ms;for(const k in o)EX[k]={v:o[k],u};}
+const MOUTH={
+ smile:{d:'M-28 -2 Q0 26 28 -2'},
+ grin:{d:'M-32 -4 Q0 10 32 -4 Q28 28 0 30 Q-28 28 -32 -4Z',fill:'#5a1a22'},
+ open:{d:'M-26 -6 Q0 -14 26 -6 Q36 34 0 40 Q-36 34 -26 -6Z',fill:'#5a1a22'},
+ o:{d:'M-10 -10 Q0 -16 10 -10 Q18 4 10 16 Q0 22 -10 16 Q-18 4 -10 -10Z',fill:'#5a1a22'},
+ flat:{d:'M-18 6 L18 6'},
+ frown:{d:'M-26 16 Q0 -10 26 16'},
+ wavy:{d:'M-30 6 Q-20 -6 -10 6 T10 6 T30 6'},
+ tiny:{d:'M-7 4 Q0 10 7 4'},
+ yawn:{d:'M-30 -8 Q0 -24 30 -8 Q38 38 0 44 Q-38 38 -30 -8Z',fill:'#5a1a22'},
+ cat:{d:'M-26 2 Q-13 16 0 4 Q13 16 26 2'},
+ teeth:{d:'M-28 -2 L28 -2 L26 14 L-26 14Z',fill:'#fff',e:'M-14 -2 V14 M0 -2 V14 M14 -2 V14'},
+ smirk:{d:'M-24 8 Q4 14 28 -6'}
+};
+const BROW={none:[0,0,0],angry:[22,-22,5],sad:[-20,20,2],up:[0,0,-14],worry:[-14,14,-6],down:[0,0,9]};
+const R={mouthPath:$('#mouthPath'),mouthExtra:$('#mouthExtra'),tongue:$('#tongue'),face:$('#face'),nosered:$('#nosered'),blushL:$('#blushL'),blushR:$('#blushR'),tearL:$('#tearL'),tearR:$('#tearR'),sweat:$('#sweat'),vein:$('#vein'),holes:$('#holes'),shadow:$('#shadow'),hue:$('#hueRot'),disco:$('#disco'),burger:$('#burger')};
+const ACCS=['shades','mustache','crown','partyhat','halo','tophat'];
+for(const a of ACCS)R['acc_'+a]=$('#acc_'+a);
+R.eye={};
+for(const s of ['L','R']){const g=k=>$('#e'+s+'_'+k);R.eye[s]={open:g('open'),pup:g('pup'),closed:g('closed'),happy:g('happy'),spiral:g('spiral'),heart:g('heart'),x:g('x'),text:g('text')};}
+const RS={};
+function show(el,on,key){if(RS[key]!==on){RS[key]=on;el.setAttribute('display',on?'inline':'none');}}
+const LK={x:200,y:260},LKT={x:200,y:260};
+const BRs={l:0,r:0,y:0};
+function compose(s,t){
+  const v=s.v;let sx=v.sx,sy=v.sy,x=v.x,y=v.y,r=v.r;
+  if(s.n==='root'){const b=Math.sin(t*.0022);const amp=EX.asleep&&nowMs()<EX.asleep.u?2.2:1;sy*=1+.011*b*amp;sx*=1-.006*b*amp;}
+  else if(s.n==='browL'){r+=BRs.l;y+=BRs.y;}
+  else if(s.n==='browR'){r+=BRs.r;y+=BRs.y;}
+  return 'translate('+x.toFixed(2)+' '+y.toFixed(2)+') translate('+s.px+' '+s.py+') rotate('+r.toFixed(2)+') scale('+sx.toFixed(3)+' '+sy.toFixed(3)+') translate('+(-s.px)+' '+(-s.py)+')';
+}
+function render(t){
+  const now=nowMs();
+  // brows
+  const bp=BROW[E('brow')]||BROW.none;BRs.l+=(bp[0]-BRs.l)*.3;BRs.r+=(bp[1]-BRs.r)*.3;BRs.y+=(bp[2]-BRs.y)*.3;
+  for(const n in SP){const s=SP[n];const str=compose(s,t);if(str!==s.last){s.last=str;s.el.setAttribute('transform',str);}}
+  // bouche
+  const mk=E('mouth');if(RS.mouth!==mk){RS.mouth=mk;const m=MOUTH[mk]||MOUTH.smile;R.mouthPath.setAttribute('d',m.d);R.mouthPath.setAttribute('fill',m.fill||'none');if(m.e){R.mouthExtra.setAttribute('d',m.e);R.mouthExtra.setAttribute('display','inline');}else R.mouthExtra.setAttribute('display','none');}
+  const tg=E('tongue');if(RS.tongue!==tg){RS.tongue=tg;if(tg>0){R.tongue.setAttribute('display','inline');R.tongue.setAttribute('transform','translate(0 8) scale(1 '+tg+') translate(0 -8)');}else R.tongue.setAttribute('display','none');}
+  // yeux
+  LK.x+=(LKT.x-LK.x)*.25;LK.y+=(LKT.y-LK.y)*.25;
+  const pm=E('pupils'),ps=E('pscale');
+  for(const s of ['L','R']){
+    const e=R.eye[s];let mode=E('eye'+s)||E('eyes');if(E('lids')>.5&&mode==='normal')mode='closed';
+    if(RS['m'+s]!==mode){RS['m'+s]=mode;e.open.setAttribute('display',mode==='normal'?'inline':'none');for(const k of ['closed','happy','spiral','heart','x','text'])e[k].setAttribute('display',mode===k?'inline':'none');}
+    const cx=s==='L'?150:250;let px=0,py=0;
+    if(pm==='cross'){px=s==='L'?10:-10;}
+    else if(pm==='left')px=-10;else if(pm==='right')px=10;else if(pm==='up')py=-10;else if(pm==='down')py=10;
+    else if(pm==='roll'){px=Math.cos(t*.012)*9;py=Math.sin(t*.012)*9;}
+    else if(pm==='crazy'){px=Math.cos(t*.02+(s==='L'?0:2))*10;py=Math.sin(t*.027+(s==='L'?1:3))*10;}
+    else{const dx=LK.x-cx,dy=LK.y-165;const d=Math.hypot(dx,dy)||1;const m=Math.min(d/9,9);px=dx/d*m;py=dy/d*m;}
+    const pt='translate('+px.toFixed(1)+' '+py.toFixed(1)+') scale('+ps+')';if(RS['pt'+s]!==pt){RS['pt'+s]=pt;e.pup.setAttribute('transform',pt);}
+    if(mode==='spiral')e.spiral.setAttribute('transform','rotate('+((t*.45)%360).toFixed(0)+')');
+    else if(mode==='heart')e.heart.setAttribute('transform','scale('+(1+.12*Math.sin(t*.02)).toFixed(2)+')');
+    else if(mode==='text'){const tx=E('eyeText');if(RS.tx!==tx){RS.tx=tx;e.text.textContent=tx;}}
+  }
+  // divers
+  const bl=E('blush');if(RS.bl!==bl){RS.bl=bl;R.blushL.setAttribute('opacity',bl);R.blushR.setAttribute('opacity',bl);}
+  show(R.nosered,E('nose')==='red','nr');show(R.tearL,E('tear')>0,'tl');show(R.tearR,E('tear')>0,'tr');show(R.sweat,E('sweat')>0,'sw');show(R.vein,E('vein')>0,'vn');
+  show(R.holes,E('holes')>0,'ho');show(R.face,!(E('hideFace')>0),'face');
+  for(const a of ACCS)show(R['acc_'+a],E(a)>0,'a'+a);
+  const dc=E('disco')>0;if(RS.dc!==dc){RS.dc=dc;R.disco.classList.toggle('on',dc);}
+  const tn=E('tint');if(RS.tint!==tn){RS.tint=tn;if(tn==='gold')R.burger.setAttribute('filter','url(#fGold)');else if(tn==='rage')R.burger.setAttribute('filter','url(#fRage)');else if(tn==='ice')R.burger.setAttribute('filter','url(#fIce)');else if(tn==='rainbow')R.burger.setAttribute('filter','url(#fRainbow)');else R.burger.removeAttribute('filter');R.burger.style.opacity=tn==='ghost'?.45:'';}
+  if(tn==='rainbow')R.hue.setAttribute('values',String(Math.round((t*.18)%360)));
+  // ombre
+  const ry=SP.root.v.y;const sc=clamp(1+ry/520,.35,1.2);const sh='translate(200 510) scale('+sc.toFixed(3)+' 1) translate(-200 -510)';if(RS.sh!==sh){RS.sh=sh;R.shadow.setAttribute('transform',sh);}
+}
+
+/* ---------- état global & contexte des réactions ---------- */
+const S={gen:0,asleep:false,idleStage:0,lastTouch:nowMs(),hinted:false,taps:[],fl:{},corners:[],lastCombo:0,b10:0,b25:0,last:null,shake:{a:0,u:0},nextBlink:nowMs()+2500,cur:null};
+const world=$('#world'),flashEl=$('#flash'),bubble=$('#bubble');
+let bubbleTm=null;
+function say(txt,ms){bubble.textContent=txt;bubble.classList.add('show');clearTimeout(bubbleTm);bubbleTm=setTimeout(()=>bubble.classList.remove('show'),ms||1500);}
+function flash(col,ms){flashEl.style.transition='none';flashEl.style.background=col;flashEl.style.opacity=RED()?.15:.5;void flashEl.offsetWidth;flashEl.style.transition='opacity '+((ms||300)/1000+.25)+'s';flashEl.style.opacity=0;}
+
+function makeCtx(gen,arg){
+  const c={arg:arg||{},gen};
+  const dead=()=>gen!==S.gen;
+  c.dead=dead;
+  c.w=ms=>new Promise((res,rej)=>setTimeout(()=>dead()?rej(CANCEL):res(),ms));
+  c.h=(p,pr,ms,sp)=>hold(p,pr,ms,sp);
+  c.hs=(ps,pr,ms,sp)=>ps.forEach(p=>hold(p,pr,ms,sp));
+  c.k=(p,pr)=>kick(p,pr);
+  c.ks=(ps,pr)=>ps.forEach(p=>kick(p,pr));
+  c.sn=(p,pr)=>snap(p,pr);
+  c.spr=(p,k,cc,ms)=>setSpr(p,k,cc,ms);
+  c.f=(o,ms)=>expr(o,ms);
+  c.acc=(n,ms)=>expr({[n]:1},ms);
+  c.s=(n,...a)=>Snd.play(n,...a);
+  c.say=say;
+  c.fx=FX;
+  c.at=at;
+  c.pop=(t,col,part)=>{const p=at(part||'bunTop');FX.pop(t,p.x,p.y-30,col);};
+  c.shake=(a,ms)=>{if(!RED())S.shake={a,u:nowMs()+ms};};
+  c.flash=flash;
+  c.tint=(n,ms)=>expr({tint:n},ms);
+  c.disco=ms=>{if(!RED())expr({disco:1},ms);};
+  c.wide=ms=>{c.hs(EYES,{sx:1.3,sy:1.3},ms);expr({pscale:.5,brow:'up'},ms);};
+  c.rep=async(n,gap,fn)=>{for(let i=0;i<n;i++){fn(i);await c.w(gap);}};
+  c.fly=(p,pr,ms)=>{hold(p,pr,ms,{k:7,c:3.2});S.fl[p]=nowMs()+ms+300;setTimeout(()=>setSpr(p,40,9,1100),ms);};
+  c.tw=(p,prop,to,ms,ease)=>new Promise((res,rej)=>{
+    const s=SP[p];const from=s.v[prop];const t0=nowMs();const ez=ease||easeIO;
+    const tick=()=>{if(dead())return rej(CANCEL);const q=Math.min(1,(nowMs()-t0)/ms);const val=from+(to-from)*ez(q);s.v[prop]=val;s.w[prop]=0;s.t[prop]=val;s.u[prop]=nowMs()+200;if(q<1)requestAnimationFrame(tick);else res();};
+    requestAnimationFrame(tick);
+  });
+  c.spin3d=(p,turns,ms,axis,face)=>new Promise((res,rej)=>{
+    const s=SP[p];const t0=nowMs();axis=axis||'sx';
+    const tick=()=>{if(dead())return rej(CANCEL);const q=Math.min(1,(nowMs()-t0)/ms);const a=turns*Math.PI*2*easeIO(q);const cs=Math.cos(a);
+      s.v[axis]=cs;s.w[axis]=0;s.t[axis]=cs;s.u[axis]=nowMs()+200;
+      if(face!==false)EX.hideFace={v:cs<0?1:0,u:nowMs()+120};
+      if(q<1)requestAnimationFrame(tick);else{delete EX.hideFace;res();}};
+    requestAnimationFrame(tick);
+  });
+  c.ghost=(n)=>{
+    const gl=$('#ghosts');
+    for(let i=0;i<(n||3);i++){
+      const wrap=document.createElementNS('http://www.w3.org/2000/svg','g');wrap.setAttribute('pointer-events','none');
+      const cl=R.burger.cloneNode(true);cl.removeAttribute('id');wrap.appendChild(cl);
+      wrap.style.opacity=String(.4-i*.08);wrap.style.transformOrigin='200px 300px';wrap.style.transition='transform .9s ease-out, opacity .9s';
+      gl.appendChild(wrap);
+      const dx=(i+1)*46*(i%2?1:-1);
+      requestAnimationFrame(()=>{wrap.style.transform='translate('+dx+'px,'+(-18*(i+1))+'px) scale('+(1+.08*(i+1))+')';wrap.style.opacity='0';});
+      setTimeout(()=>{try{wrap.remove()}catch(e){}},1000);
+    }
+  };
+  return c;
+}
+
+/* ---------- bibliothèque de réactions ---------- */
+const LIB=[];const CNT={};
+function def(cat,o){CNT[cat]=(CNT[cat]||0)+1;o.cat=cat;o.id=cat+String(CNT[cat]).padStart(2,'0');LIB.push(o);return o;}
+const TOUCH=(part,name,desc,run)=>def('touch',{part,name,desc,run});
+const INGR=(part,name,desc,run)=>def('ingr',{part,name,desc,run});
+const FACE=(part,name,desc,run)=>def('face',{part,name,desc,run});
+const PULL=(part,dir,name,desc,run)=>def('pull',{part,dir,name,desc,run});
+const PHYS=(name,desc,run)=>def('phys',{name,desc,run});
+const MUSIC=(name,desc,run,parts)=>def('music',{name,desc,run,parts});
+const GEST=(key,name,desc,run)=>def('gest',{key,name,desc,run});
+const SECRET=(key,name,desc,hint,run)=>def('secret',{key,name,desc,hint,run,secret:true});
+const COMBO=(key,name,desc,run)=>def('combo',{key,name,desc,run});
+
+/* ===== 1) TOUCHER (25) ===== */
+TOUCH('bunTop','Boop sur le crâne','Un petit appui sur le dessus du pain : il s’écrase et rebondit.',async c=>{
+  c.h('bunTop',{y:22,sy:.8,sx:1.07},140);c.k('root',{sy:-1.4});c.f({eyes:'closed',mouth:'tiny'},450);c.s('pop',1.1);c.pop('BOOP !','#fff');
+  await c.w(150);c.k('bunTop',{y:-500});c.say('Boop !',900);});
+TOUCH('bunTop','Coup de chapeau','Le pain se soulève poliment pour te saluer.',async c=>{
+  c.h('bunTop',{y:-28,r:-16,x:-10},750);c.h('armR',{r:-100},650);c.f({eyes:'happy',brow:'up',mouth:'smile'},950);c.s('chime');c.say('Bien le bonjour !',1300);
+  await c.w(750);c.k('bunTop',{y:300,r:-260});c.s('pop',.8);});
+TOUCH('bunTop','Chatouilles de crâne','Le pain tremble de rire sous tes doigts.',async c=>{
+  c.f({eyes:'happy',mouth:'grin',blush:1},1100);c.s('giggle',6);await c.rep(12,55,i=>c.k('bunTop',{r:(i%2?1:-1)*650}));c.say('Hihihi !',700);});
+TOUCH('seed','Graine volante','Une graine de sésame s’échappe et retombe en tournoyant.',async c=>{
+  const p=c.at('seed');c.fx.burst(p.x,p.y,'#fff2cf',10,1.2);c.f({pupils:'up'},900);c.s('pop',1.6);c.say('Ma graine !',1000);c.h('bunTop',{r:5},300);});
+TOUCH('seed','Pluie de sésame','Une rafale de graines et un éternuement qui n’éclate pas.',async c=>{
+  const p=c.at('seed');c.fx.burst(p.x,p.y,'#fff2cf',26,1.6);c.f({mouth:'o',eyes:'closed',brow:'worry'},700);c.s('sniff');
+  await c.w(350);c.s('pop',.7);c.say('Atch… presque !',1000);c.k('bunTop',{y:-300,r:200});});
+TOUCH('bunBottom','Fesses rebondies','Le pain du bas rebondit comme une petite fesse joyeuse.',async c=>{
+  c.k('bunBottom',{y:-420,sy:-6});c.k('root',{y:-380});c.hs(['legL','legR'],{y:-14},250);c.f({blush:1,mouth:'o'},650);c.wide(500);c.s('boing',1.2);c.say('Hé !',900);});
+TOUCH('bunBottom','Petit pet de pain','Le pain du bas lâche un pouet. Gaston nie tout.',async c=>{
+  const p=c.at('bunBottom');c.h('bunBottom',{y:12,sy:.75,sx:1.1},300);c.s('pouet');c.fx.smoke(p.x,p.y,6);c.f({blush:1,eyes:'closed',mouth:'tiny'},1300);c.k('root',{x:200});
+  await c.w(450);c.say('Ce n’était pas moi !',1300);c.f({sweat:1},900);});
+TOUCH('bunBottom','Soupir de pain','Le pain du bas s’aplatit en soupirant.',async c=>{
+  c.h('bunBottom',{sy:.6,sx:1.12,y:10},700);c.h('root',{sy:.95},900);c.f({mouth:'flat',brow:'sad',sweat:1},1200);c.s('down',.8);c.say('Pfff…',1100);});
+TOUCH('lettuce','Frisson de laitue','La salade frissonne comme une feuille.',async c=>{
+  c.f({brow:'worry',mouth:'wavy'},800);c.s('squeak',1.3);await c.rep(10,45,i=>c.k('lettuce',{sx:(i%2?1:-1)*2.5,r:(i%2?1:-1)*300}));});
+TOUCH('lettuce','Salade chatouilleuse','La salade bat des feuilles en gloussant.',async c=>{
+  c.f({eyes:'happy',mouth:'grin'},900);c.s('giggle',7);await c.rep(8,70,i=>c.k('lettuce',{y:(i%2?1:-1)*500}));c.say('Ça chatouille !',900);});
+TOUCH('tomato','Tomate rougissante','La tomate gonfle de gêne et Gaston rougit avec elle.',async c=>{
+  const p=c.at('tomato');c.h('tomato',{sx:1.07,sy:1.15},1000);c.f({blush:1,eyes:'closed',mouth:'tiny',brow:'worry'},1400);c.s('kiss');c.fx.emoji('💕',p.x,p.y,5);c.say('Oh… tu me gênes…',1500);});
+TOUCH('tomato','Pépin éjecté','Un jet de jus de tomate fuse de la tranche.',async c=>{
+  const p=c.at('tomato');c.fx.drops(p.x,p.y,'#e8412f',16);c.s('splat');c.f({eyes:'closed'},400);c.k('tomato',{sx:-5,sy:4});c.say('Splurp !',800);});
+TOUCH('cheese','Tranche sautillante','La tranche de fromage saute en l’air avec un petit ding.',async c=>{
+  c.k('cheese',{y:-900,r:200});c.s('ding');c.f({eyes:'happy'},600);await c.w(350);c.k('cheese',{y:400});c.s('pop',1.3);});
+TOUCH('cheese','Fromage timide','Le fromage se rétracte et rougit.',async c=>{
+  c.h('cheese',{sx:.8,x:-14,sy:.9},900);c.f({blush:1,eyes:'closed'},900);c.say('Je suis timide…',1300);c.s('squeak',1.6);});
+TOUCH('patty','Ventre à tapoter','Le steak résonne comme un tambour.',async c=>{
+  c.k('patty',{sy:-6,sx:3});c.k('root',{sy:-1.2});c.s('kick');c.pop('POUM','#ffd23a','patty');c.f({mouth:'o'},350);c.say('Poum poum !',800);});
+TOUCH('patty','Rot de burger','Le steak gonfle puis… un rot discret.',async c=>{
+  const p=c.at('patty');c.h('patty',{sx:1.1,sy:1.12},500);c.f({mouth:'o',eyes:'closed'},700);await c.w(450);c.s('burp');c.fx.smoke(p.x,p.y-100,6);c.k('bunTop',{y:-500});c.f({blush:1},900);c.say('…Pardon.',1200);});
+TOUCH('patty','Steak qui grésille','Le steak grésille de plaisir.',async c=>{
+  const p=c.at('patty');c.s('sizzle');c.fx.smoke(p.x,p.y-30,8);c.f({eyes:'happy',mouth:'grin'},1000);await c.rep(14,60,i=>c.k('patty',{x:(i%2?1:-1)*350}));c.say('Tsssss !',800);});
+TOUCH('armL','Poignée de main','Le bras gauche te serre la main avec enthousiasme.',async c=>{
+  c.f({eyes:'happy',mouth:'smile'},1100);c.s('chime');c.say('Enchanté !',1100);await c.rep(6,150,i=>c.h('armL',{r:i%2?95:125},170));});
+TOUCH('armL','High five gauche','Un grand « tchak » avec confettis.',async c=>{
+  const p=c.at('armL');c.h('armL',{r:150},400);c.k('root',{y:-400});c.s('clap');c.pop('CLAP !','#fff','armL');c.fx.confetti(p.x,p.y,18);c.f({eyes:'happy',mouth:'grin'},700);});
+TOUCH('armR','Salut militaire','Garde-à-vous ! Le bras droit salue, très sérieux.',async c=>{
+  c.h('armR',{r:-168},1100);c.f({mouth:'flat',brow:'down',pupils:'left'},1100);c.h('root',{sy:1.04},1100);c.s('honk',1.4);c.say('Au rapport !',1100);});
+TOUCH('armR','Aile de poulet','Le bras droit bat comme une aile de poulet.',async c=>{
+  c.s('squeak');c.f({mouth:'o'},900);c.say('Cot cot !',900);await c.rep(14,60,i=>c.k('armR',{r:(i%2?-1:1)*900}));});
+TOUCH('legL','Coup de pied','Un coup de pied karaté avec cri de guerre.',async c=>{
+  c.h('legL',{r:55,y:-10},400);c.k('root',{r:-250,x:-40});c.s('whoosh');c.say('Hiyah !',900);c.f({brow:'angry',mouth:'open'},600);});
+TOUCH('legL','Orteil chatouillé','La jambe gauche gigote, tout le burger rigole.',async c=>{
+  c.s('giggle',8);c.f({eyes:'happy',mouth:'grin'},1000);await c.rep(10,60,i=>{c.k('legL',{r:(i%2?-1:1)*700});if(i%3===0)c.k('root',{y:-200});});});
+TOUCH('legR','Pas de côté','Gaston glisse d’un pas chassé, très fier.',async c=>{
+  c.h('legR',{r:-45},300);c.h('root',{x:70,r:6},500);c.s('boing',1.5);c.f({eyes:'happy'},800);await c.w(600);c.h('root',{x:-30},400);c.say('Zip, zap !',900);});
+TOUCH('legR','Coup de talon','Un grand coup de talon fait trembler l’écran.',async c=>{
+  const p=c.at('legR');c.h('legR',{y:-18},150);await c.w(150);c.k('legR',{y:700});c.k('root',{y:260,sy:-2});c.shake(8,260);c.s('stomp');c.fx.smoke(p.x,p.y+30,6);});
+
+/* ===== 2) INGRÉDIENTS (20) ===== */
+INGR('bunTop','Coucou, le pain se soulève','Le pain monte pour montrer l’intérieur du burger.',async c=>{
+  c.h('bunTop',{y:-70,r:2},1100,{k:60,c:9});c.f({pupils:'down',brow:'up'},1100);c.h('lettuce',{y:-6},900);c.s('squeak',.6);c.say('Tu veux voir l’intérieur ?',1500);
+  await c.w(1100);c.k('bunTop',{y:300});c.s('clap');});
+INGR('bunTop','Couvercle à charnière','Le pain s’ouvre en grand comme un couvercle de boîte.',async c=>{
+  c.h('bunTop',{x:-70,y:-60,r:-42},950,{k:70,c:10});c.s('up',.5);c.f({mouth:'o'},900);await c.w(1000);c.k('bunTop',{y:400});c.s('clap');c.pop('CLAC !','#fff');});
+INGR('bunTop','Le pain prend la tangente','Le pain file sur le côté puis revient en courant.',async c=>{
+  const d=Math.random()<.5?-1:1;c.fly('bunTop',{x:d*260,y:-40,r:d*30},700);c.s('whoosh');c.say('Attends-moi !',1200);c.f({pupils:d>0?'right':'left'},1000);await c.w(1500);c.s('pop');});
+INGR('lettuce','Salade volante','La salade s’envole très haut puis revient se poser.',async c=>{
+  c.fly('lettuce',{y:-700,x:rnd(-120,120),r:400},800);c.s('up');c.f({pupils:'up'},1000);c.say('Elle s’est envolée !',1300);await c.w(1800);c.s('pop');});
+INGR('lettuce','Salade-tourbillon','La salade tournoie sur elle-même en semant des feuilles.',async c=>{
+  const p=c.at('lettuce');c.sn('lettuce',{r:900});c.spr('lettuce',25,10,1500);c.s('whoosh');c.f({eyes:'spiral'},1200);c.fx.emoji('🥬',p.x,p.y,6,{vy:-200});});
+INGR('lettuce','Salade-perruque','La salade grimpe sur la tête de Gaston comme une coiffure folle.',async c=>{
+  c.h('lettuce',{y:-228,sy:1.1},1900,{k:30,c:8});c.f({mouth:'cat',eyes:'happy'},1900);c.s('magic');c.say('Qui veut une coiffure ?',1500);});
+INGR('lettuce','Salade croquante','Des petits « croc » et des éclats verts.',async c=>{
+  const p=c.at('lettuce');c.s('crunch');c.fx.burst(p.x,p.y,'#5fbf3f',14);c.f({mouth:'open'},700);c.say('Croc croc !',900);await c.rep(6,80,i=>c.k('lettuce',{sx:i%2?-3:3}));});
+INGR('tomato','Tomate rebondissante','La tomate rebondit quatre fois dans le burger.',async c=>{
+  await c.rep(4,330,i=>{c.k('tomato',{y:-1300+i*200});c.s('boing',1+i*.15);});});
+INGR('tomato','Tomate qui roule','La tomate roule d’un bord à l’autre du burger.',async c=>{
+  await Promise.all([c.tw('tomato','x',-140,420),c.tw('tomato','r',-360,420)]);c.sn('tomato',{r:0});c.s('whoosh');
+  await Promise.all([c.tw('tomato','x',140,700),c.tw('tomato','r',360,700)]);c.sn('tomato',{r:0});
+  await Promise.all([c.tw('tomato','x',0,420),c.tw('tomato','r',-360,420)]);c.sn('tomato',{r:0});});
+INGR('tomato','Éclaboussure de ketchup','Ça gicle de partout ! Gaston ferme les yeux.',async c=>{
+  const p=c.at('tomato');c.fx.drops(p.x,p.y,'#d92b1a',30,1.8);c.f({eyes:'closed',brow:'worry'},900);c.s('splat');c.k('root',{x:-250});c.shake(6,200);c.say('Aïe, ça éclabousse !',1200);});
+INGR('tomato','Tomate plongeuse','La tomate plonge vers le bas du burger et remonte en flèche.',async c=>{
+  c.h('tomato',{y:110,sx:.9},500,{k:30,c:8});c.s('down');await c.w(550);c.k('bunBottom',{y:300});c.s('pop');c.k('tomato',{y:-300});});
+INGR('cheese','Fromage extensible','Le fromage s’étire sur les côtés puis claque.',async c=>{
+  c.h('cheese',{sx:1.55,sy:.8},700,{k:40,c:7});c.s('stretch');await c.w(700);c.k('cheese',{sx:-8});c.s('snap');});
+INGR('cheese','Fromage gruyère','Des trous apparaissent dans le fromage, pop pop pop pop.',async c=>{
+  c.f({holes:1},2300);c.say('Je suis plein de trous !',1300);await c.rep(4,350,i=>{c.s('pop',1+i*.25);c.k('cheese',{y:-300});});});
+INGR('cheese','Fromage enroulé','La tranche s’enroule comme un cigare au fromage.',async c=>{
+  c.h('cheese',{sx:.3,sy:2.4},900,{k:60,c:9});c.s('whoosh',1.3);c.f({pupils:'down'},900);c.say('Cigare au fromage !',1100);});
+INGR('cheese','Fromage électrique','Une décharge fait vibrer la tranche et les yeux de Gaston.',async c=>{
+  const p=c.at('cheese');c.s('zap');c.flash('#fff3a0',150);c.shake(7,350);c.fx.stars(p.x,p.y,10);c.f({pupils:'crazy',mouth:'teeth'},700);
+  await c.rep(10,40,i=>c.k('cheese',{r:(i%2?-1:1)*400,x:(i%2?-1:1)*120}));c.say('Zzzap !',700);});
+INGR('patty','Steak retourné','Le steak saute et fait un tour complet comme à la poêle.',async c=>{
+  c.k('patty',{y:-1100});await c.spin3d('patty',2,700,'sy',false);c.s('sizzle');c.say('Retourné !',900);});
+INGR('patty','Steak pimenté','Gaston devient rouge piment et crache des flammes.',async c=>{
+  const p=c.at('mouth');c.tint('rage',1800);c.f({mouth:'open',tongue:1,blush:1,sweat:1},1800);c.fx.emoji('🔥',p.x,p.y+20,10,{vy:-100});c.s('aah');c.say('Ça pique !!',1300);});
+INGR('patty','Steak bodybuilder','Le steak gonfle ses muscles, les bras aussi !',async c=>{
+  c.h('patty',{sx:1.12,sy:1.35},1300);c.h('armL',{r:130,sy:1.3},1300);c.h('armR',{r:-130,sy:1.3},1300);c.f({brow:'angry',mouth:'teeth'},1300);c.s('grr');c.say('RAAAH ! Protéines !',1400);});
+INGR('bunBottom','Pain ventouse','Le pain du bas s’élargit en ventouse, les pieds quittent le sol.',async c=>{
+  c.h('bunBottom',{sx:1.25,sy:.8},900);c.hs(['legL','legR'],{y:-30},900);c.s('slurp');await c.w(900);c.k('bunBottom',{sx:-5});c.s('pop');c.k('root',{y:-500});});
+INGR('bunBottom','Tiroir à frites','Le pain du bas s’ouvre comme un tiroir et libère des frites.',async c=>{
+  const p=c.at('bunBottom');await c.tw('bunBottom','x',140,300);c.s('ding');c.fx.emoji('🍟',p.x+60,p.y,8,{vy:-500,g:800});await c.w(600);await c.tw('bunBottom','x',0,300);c.s('pop');});
+
+/* ===== 3) VISAGE (20) ===== */
+FACE('eyeL','Œil exorbité','L’œil gauche sort des orbites, la pupille minuscule.',async c=>{
+  c.h('eyeL',{sx:1.9,sy:1.9},1100);c.f({eyeL:'normal',pscale:.35},1100);c.h('browL',{y:-16},1100);c.s('boing',1.4);c.say('Mon œil !?',1000);});
+FACE('eyeL','Clin d’œil','Un clin d’œil complice avec sourire en coin.',async c=>{
+  const p=c.at('eyeL');c.f({eyeL:'happy',mouth:'smirk',blush:.8},1000);c.s('ding');c.fx.stars(p.x,p.y,6);c.say('😉',900);});
+FACE('eyeL','Larme à l’œil','Une larme coule, Gaston fait un tout petit snif.',async c=>{
+  c.f({tear:1,brow:'sad',mouth:'frown'},1900);c.s('sad');c.say('Snif…',1500);});
+FACE('eyeR','Œil tourbillon','L’œil droit se met à tourner en spirale.',async c=>{
+  c.f({eyeR:'spiral'},1600);c.h('eyeR',{r:30},300);c.k('root',{r:300});c.s('down',.7);c.say('Whoooa…',1200);});
+FACE('eyeR','Œil en cœur','Un œil en forme de cœur et des bulles d’amour.',async c=>{
+  const p=c.at('eyeR');c.f({eyeR:'heart',blush:1,mouth:'smile'},1700);c.fx.emoji('💖',p.x,p.y,5);c.s('kiss');});
+FACE('eyeR','Œil-fusée','L’œil droit décolle comme une fusée puis revient.',async c=>{
+  c.fly('eyeR',{y:-120,r:300},400);c.s('up');c.f({mouth:'o'},900);await c.w(900);c.s('pop');c.say('Houston ?',900);});
+FACE('mouth','Bâillement','Un énorme bâillement contagieux.',async c=>{
+  c.f({mouth:'yawn',eyes:'closed'},1500);c.s('yawn');c.h('bunTop',{y:-12},1200);c.say('Haaaaa…',1300);});
+FACE('mouth','Langue tirée','Bleh ! Gaston tire la langue avec un bruit de trompette.',async c=>{
+  c.f({tongue:1,mouth:'grin',eyes:'happy'},1100);c.s('brr');c.say('Bleh !',900);});
+FACE('mouth','Bouche en O','Surprise totale : les yeux et la bouche s’arrondissent.',async c=>{
+  c.f({mouth:'o'},900);c.wide(900);c.s('gasp');c.h('mouth',{sx:1.2,sy:1.4},800);c.say('Oh !!',700);});
+FACE('mouth','Grimace dentée','Gaston serre les dents, sourcils en colère.',async c=>{
+  c.f({mouth:'teeth',brow:'angry'},1100);c.wide(1100);c.s('grr');c.shake(4,400);c.say('Grrr !',900);});
+FACE('nose','Strabisme','Les pupilles se croisent vers le nez.',async c=>{
+  c.f({pupils:'cross'},2200);c.s('squeak',1.2);c.say('Je louche !',1400);c.h('nose',{sx:1.3,sy:1.3},500);});
+FACE('nose','Nez de clown','Le nez devient rouge et fait pouet.',async c=>{
+  c.f({nose:'red'},2300);c.s('honk',2);c.h('nose',{sx:1.4,sy:1.4},300);c.pop('POUET !','#ff2d3d','nose');});
+FACE('nose','Nez frétillant','Le nez frétille comme celui d’un lapin.',async c=>{
+  c.f({mouth:'cat'},900);c.s('sniff');await c.rep(8,70,i=>c.k('nose',{r:(i%2?1:-1)*900,sx:i%2?3:-3}));});
+FACE('cheekL','Joue gonflée','La joue gauche gonfle puis éclate d’un pop.',async c=>{
+  c.h('cheekL',{sx:1.7,sy:1.6},1000,{k:60,c:8});c.f({mouth:'tiny',blush:.9},1000);c.s('up',.5);await c.w(1000);c.s('pop');c.k('cheekL',{sx:-8});});
+FACE('cheekL','Rougeur à gauche','Gaston rougit, penche la tête et envoie des cœurs.',async c=>{
+  const p=c.at('cheekL');c.f({blush:1,mouth:'smile'},1500);c.h('cheekL',{sx:1.2,sy:1.2},1500);c.h('bunTop',{r:-5},1400);c.fx.emoji('💗',p.x,p.y,4);c.s('ooh');});
+FACE('cheekR','Joue pincée','Aïe ! La joue s’étire puis claque comme un élastique.',async c=>{
+  c.h('cheekR',{sx:2,x:20},500);c.f({eyes:'closed',mouth:'flat'},700);c.s('squeak',1.5);await c.w(500);c.k('cheekR',{sx:-10});c.say('Aïe !',800);});
+FACE('cheekR','Joue-ballon','La joue droite devient un ballon puis explose en confettis.',async c=>{
+  const p=c.at('cheekR');c.h('cheekR',{sx:2.4,sy:2.4},900,{k:50,c:7});c.s('up',.6);await c.w(900);c.s('pop',.6);c.fx.confetti(p.x,p.y,24);c.k('cheekR',{sx:-14});});
+FACE('brow','Sourcils fâchés','Gaston fait semblant d’être très fâché.',async c=>{
+  c.f({brow:'angry',vein:1,mouth:'frown'},1500);c.s('buzz');c.tint('rage',600);c.say('Grr !',1000);});
+FACE('brow','Sourcil interrogateur','Un sourcil se lève, l’autre descend : « Hmm ? »',async c=>{
+  c.h('browL',{y:-18},1400);c.h('browR',{y:8,r:-12},1400);c.f({pupils:'up',mouth:'smirk'},1400);c.s('hmm');c.say('Hmm ?',1200);});
+FACE('brow','Danse des sourcils','Les sourcils dansent en rythme.',async c=>{
+  c.f({mouth:'grin'},1400);await c.rep(10,110,i=>{c.k('browL',{y:(i%2?-1:1)*600});c.k('browR',{y:(i%2?1:-1)*600});if(i%2===0)c.s('bass',40+(i%4)*2);});});
+
+/* ===== 4) ÉTIRER / TIRER (20) ===== */
+PULL('cheese','up','Chewing-gum de fromage','Tire le fromage vers le haut : il s’étire à l’infini puis claque.',async c=>{
+  c.k('cheese',{y:900,sy:-14});c.s('snap');c.pop('SNAP !','#ffd23a','cheese');c.f({mouth:'o'},600);});
+PULL('cheese','down','Cheddar fondant','Tire le fromage vers le bas : il fond et coule.',async c=>{
+  const p=c.at('cheese');c.h('cheese',{sy:1.9,y:18},1100,{k:60,c:9});c.fx.drops(p.x,p.y+20,'#ffd23a',18,.8);c.f({mouth:'wavy',eyes:'closed'},1200);c.say('Je fonds…',1200);await c.rep(3,250,()=>c.s('drip'));});
+PULL('cheese','side','Lasso de fromage','Tire le fromage sur le côté : il tourne comme un lasso.',async c=>{
+  c.sn('cheese',{r:(c.arg.dx<0?-1:1)*720});c.spr('cheese',25,10,1400);c.s('whoosh');c.f({pupils:'roll'},1200);c.say('Yeehaw !',1000);});
+PULL('bunTop','up','Chapeau levé','Soulève le pain très haut : Gaston te fait coucou.',async c=>{
+  c.h('bunTop',{y:-180,r:-8},1500,{k:50,c:8});c.f({pupils:'down',mouth:'o',brow:'up'},1500);c.h('armL',{r:110},1400);c.h('armR',{r:-110},1400);c.s('up',.7);c.say('Coucou, c’est moi !',1400);
+  await c.w(1500);c.k('bunTop',{y:900});c.s('clap');c.shake(5,200);});
+PULL('bunTop','side','Toupie 3D','Tire le pain sur le côté : il tourne et montre son dos.',async c=>{
+  c.s('whoosh');c.say('Je tourne la tête !',1200);await c.spin3d('bunTop',2,1100,'sx',true);});
+PULL('bunTop','down','Chapeau enfoncé','Enfonce le pain : tout le burger s’écrase puis rebondit.',async c=>{
+  c.h('root',{sy:.62,sx:1.22},500,{k:60,c:8});c.hs(MID,{sx:1.12},500);c.wide(700);c.s('splat');c.shake(7,300);
+  await c.w(520);c.k('root',{sy:5,y:-500});c.s('boing');c.say('Écrasé !',900);});
+PULL('lettuce','any','Accordéon de salade','Étire la salade : elle joue de l’accordéon.',async c=>{
+  c.s('stretch');c.k('armL',{r:200});c.k('armR',{r:-200});await c.rep(6,130,i=>{c.h('lettuce',{sx:i%2?.6:1.7},140);c.s('squeak',.8+i*.1);});});
+PULL('tomato','up','Tomate catapultée','Tire la tomate vers le haut : elle part en orbite et revient.',async c=>{
+  c.fly('tomato',{y:-800,x:rnd(-80,80),r:700},700);c.s('up');c.f({pupils:'up'},1200);c.say('Tomate en orbite !',1300);await c.w(1600);c.s('splat');});
+PULL('tomato','any','Tomate élastique','Étire la tomate : elle claque et vibre.',async c=>{
+  c.k('tomato',{sx:-9,sy:5});c.s('boing',1.1);c.f({pupils:'cross'},1000);c.pop('BOING !','#ff5c8a','tomato');});
+PULL('patty','side','Steak glissant','Tire le steak sur le côté : il s’échappe et revient.',async c=>{
+  const d=c.arg.dx<0?-1:1;c.fly('patty',{x:d*260},600);c.k('root',{r:-d*200});c.s('whoosh',.8);c.wide(1000);c.say('Mon steak !',1200);await c.w(1200);c.s('squeak');});
+PULL('patty','vert','Burger-yoyo','Tire le steak vers le haut ou le bas : tout le burger fait le yoyo.',async c=>{
+  c.h('root',{sy:1.35,sx:.82},600,{k:30,c:5});c.s('up',.8);c.f({pupils:'roll'},1400);await c.w(600);c.k('root',{sy:-6});c.s('down',.8);});
+PULL('cheekL','any','Tête-toupie','Tire la joue gauche : la tête tourbillonne.',async c=>{
+  c.sn('bunTop',{r:-1080});c.spr('bunTop',25,10,1400);c.f({eyes:'spiral'},1500);c.s('whoosh',1.2);c.say('Ça tourne !',1200);});
+PULL('cheekR','any','Joue lance-pierre','Relâche la joue droite : la tête fait un grand « brrr ».',async c=>{
+  c.k('bunTop',{r:1500});c.s('brr');c.f({mouth:'wavy',pupils:'cross'},1000);c.say('Brrrrr !',1000);});
+PULL('armL','any','Bras élastique','Étire le bras gauche : il se rétracte avec une claque.',async c=>{
+  c.k('armL',{sy:-18,r:-500});c.s('snap');c.pop('PAF !','#fff','armL');c.k('root',{r:-200,x:60});c.say('Mon bras !',900);});
+PULL('armR','any','Bras-serpent','Étire le bras droit : il serpente en sifflant.',async c=>{
+  c.s('hiss');c.f({pupils:'cross',mouth:'wavy'},1300);c.say('Sssalut !',1100);await c.rep(12,90,i=>c.k('armR',{r:(i%2?-1:1)*(1000-i*70),sy:i%2?2:-2}));});
+PULL('legL','any','Saut de kangourou','Tire la jambe gauche : Gaston fait trois bonds.',async c=>{
+  await c.rep(3,520,i=>{c.k('root',{y:-1100+i*250});c.s('boing',1+i*.2);c.hs(['armL','armR'],{r:i%2?60:-60},300);});});
+PULL('legR','any','Jambe nouée','Tire la jambe droite : elle se noue et Gaston tombe.',async c=>{
+  c.sn('legR',{r:-720});c.spr('legR',25,10,1300);c.k('root',{r:420,x:90});c.s('sad');c.f({brow:'sad',pupils:'cross'},1400);c.say('Aïe aïe aïe !',1300);});
+PULL('mouth','any','Bouche XXL','Étire la bouche : elle devient énorme et crache des confettis.',async c=>{
+  const p=c.at('mouth');c.h('mouth',{sx:2.1,sy:2.3},1100,{k:60,c:8});c.f({mouth:'yawn'},1100);c.wide(1100);c.s('aah');c.h('bunTop',{y:-26},1000);
+  await c.w(1100);c.fx.confetti(p.x,p.y,30);c.k('mouth',{sy:-12});c.s('pop');});
+PULL('bunBottom','any','Pain accordéon','Étire le pain du bas : il s’écrase en pouet d’accordéon.',async c=>{
+  c.h('bunBottom',{sx:1.4,sy:.55},800,{k:60,c:8});c.h('root',{sy:.88},800);c.h('legL',{r:50},800);c.h('legR',{r:-50},800);c.s('squeak');c.s('stretch');
+  await c.w(800);c.k('bunBottom',{sy:6,sx:-6});c.s('pouet');});
+PULL('eye','any','Œil à ressort','Étire un œil : il rebondit sur son ressort.',async c=>{
+  const e=c.arg.part==='eyeR'?'eyeR':'eyeL';c.k(e,{y:-1200,sy:7,sx:-3});c.s('boing',1.6);c.f({mouth:'o'},700);c.say('Sproing !',900);});
+
+/* ===== 5) PHYSIQUE (20) — toucher le fond ===== */
+PHYS('Tremblote','Gaston tremble de tout son corps.',async c=>{
+  c.s('squeak',1.8);c.wide(700);await c.rep(16,40,i=>c.k('root',{x:(i%2?1:-1)*700}));});
+PHYS('Saut périlleux','Un salto arrière complet !',async c=>{
+  c.k('root',{y:-1300});c.s('up');await c.tw('root','r',360,800);c.sn('root',{r:0});c.s('boing');});
+PHYS('Rebond géant','Un bond immense, l’ombre rétrécit au sol.',async c=>{
+  const p=c.at('bunTop');c.k('root',{y:-1900,sy:3});c.s('boing',.7);c.fx.emoji('⭐',p.x,p.y,6);c.f({eyes:'happy',mouth:'open'},1200);});
+PHYS('Crêpe','Aplati comme une crêpe, puis il se regonfle.',async c=>{
+  c.h('root',{sy:.4,sx:1.5},700,{k:60,c:7});c.f({mouth:'o'},800);c.s('splat');await c.w(700);c.k('root',{sy:5,y:-400});c.s('boing');});
+PHYS('Slinky','Il s’étire et se comprime comme un ressort.',async c=>{
+  await c.rep(5,200,i=>{c.k('root',{sy:(i%2?-1:1)*8,sx:(i%2?1:-1)*4});c.s(i%2?'down':'up',1+i*.1);});});
+PHYS('Toupie','Tout le burger pivote sur lui-même.',async c=>{
+  c.s('whoosh',1.4);await c.spin3d('root',3,1400,'sx',true);c.f({eyes:'spiral'},1200);c.s('down',.7);});
+PHYS('Glissade','Gaston glisse sur le côté en couinant.',async c=>{
+  const d=c.arg.dir||1;c.h('root',{x:d*130,r:d*8},700);c.s('whoosh',.8);c.f({mouth:'o'},700);c.s('squeak',.7);});
+PHYS('Métronome','Gaston se balance, tic-tac.',async c=>{
+  await c.rep(6,260,i=>{c.k('root',{r:(i%2?-1:1)*900});c.s(i%2?'tock':'tick');});});
+PHYS('Hoquet','Quatre hoquets qui le font sauter.',async c=>{
+  await c.rep(4,520,()=>{c.k('root',{y:-700});c.s('hic');c.f({mouth:'o'},200);});});
+PHYS('Grelottement','Brrr ! Il grelotte, des flocons tombent.',async c=>{
+  c.f({mouth:'teeth'},1700);c.tint('ice',1700);c.fx.rain('❄️',14);await c.rep(30,55,i=>c.k('root',{x:(i%2?1:-1)*350}));});
+PHYS('Ola des couches','Chaque couche fait la ola, de bas en haut.',async c=>{
+  const l=LAY.slice().reverse();for(let i=0;i<l.length;i++){c.k(l[i],{x:900});c.s('pop',.8+i*.15);await c.w(110);}});
+PHYS('Burger tordu','Les étages se tordent en sens inverse.',async c=>{
+  LAY.forEach((p,i)=>c.h(p,{r:(i%2?1:-1)*14,x:(i-2.5)*10},1000));c.s('stretch');c.f({mouth:'wavy',pupils:'crazy'},1000);await c.w(1000);c.s('boing');});
+PHYS('Trampoline','Cinq rebonds de plus en plus hauts.',async c=>{
+  c.hs(['armL','armR'],{r:80},2600);await c.rep(5,500,i=>{c.k('root',{y:-700-i*260});c.s('boing',.8+i*.2);});});
+PHYS('Chute de côté','Gaston bascule, s’écrase… et se relève d’un coup.',async c=>{
+  const d=c.arg.dir||1;c.f({eyes:'x',mouth:'wavy'},1300);c.h('root',{r:d*82,x:d*60},700,{k:30,c:9});c.s('down');await c.w(750);c.s('stomp');c.shake(8,300);await c.w(500);c.s('boing');c.k('root',{r:-d*600});});
+PHYS('Équilibriste','Il agite les bras pour garder l’équilibre.',async c=>{
+  c.f({sweat:1,mouth:'wavy',brow:'worry'},1900);await c.rep(8,200,i=>{const s=i%2?-1:1;c.k('root',{r:s*(500-i*30)});c.k('armL',{r:s*400});c.k('armR',{r:s*400});c.s('squeak',1+i*.05);});});
+PHYS('Roulé-boulé','Gaston roule sur le côté, puis revient en roulant.',async c=>{
+  const d=c.arg.dir||1;c.s('whoosh');
+  await Promise.all([c.tw('root','x',d*160,700),c.tw('root','r',d*360,700)]);c.sn('root',{r:0});c.s('pop');
+  await Promise.all([c.tw('root','x',0,700),c.tw('root','r',-d*360,700)]);c.sn('root',{r:0});});
+PHYS('Pneu dégonflé','Il se dégonfle lentement, puis on le regonfle à la pompe.',async c=>{
+  c.s('hiss');c.h('root',{sy:.55,sx:1.12},1100,{k:15,c:6});c.f({mouth:'flat',eyes:'closed'},1200);await c.w(1100);
+  for(let i=0;i<3;i++){c.k('root',{sy:2.5});c.s('pop',.6+i*.3);await c.w(220);}});
+PHYS('Vue éclatée','Toutes les couches s’écartent comme sur un schéma.',async c=>{
+  LAY.forEach((p,i)=>c.h(p,{y:(i-2.5)*26*(p==='bunTop'?1.6:1)},1100,{k:25,c:7}));c.s('up');c.say('Vue éclatée !',1300);await c.w(1100);c.s('clap');});
+PHYS('Gelé','Gaston se fige dans la glace… puis se secoue pour dégeler.',async c=>{
+  c.tint('ice',2200);c.fx.rain('❄️',16);c.s('chime');c.say('Brrr… figé !',1300);c.f({mouth:'teeth'},2000);await c.w(1700);c.shake(6,300);c.s('snap');});
+PHYS('Aimant','Un aimant invisible l’attire vers ton doigt.',async c=>{
+  const d=c.arg.dir||1;c.h('root',{x:d*150,r:d*14},900,{k:35,c:7});c.f({pupils:d>0?'right':'left',mouth:'o'},900);c.s('zap');await c.w(900);c.s('boing');});
+
+/* ===== 6) SONS & MUSIQUE (15) — bouton 🎵 ===== */
+MUSIC('Beatbox','Gaston improvise un beat avec sa bouche.',async c=>{
+  const ms=Snd.beat('k.hsh.k.kh.sh.s',120);c.say('Boum tchi boum tchak !',1500);await c.rep(14,ms/16,i=>{c.k('bunTop',{y:i%4===0?-500:-200});c.f({mouth:i%2?'o':'teeth'},120);});},['mouth']);
+MUSIC('La la la','Une petite gamme chantée avec la bouche grande ouverte.',async c=>{
+  const ms=Snd.vseq([[60,.5],[62,.5],[64,.5],[65,.5],[67,1],[64,.5],[60,1]],120,'a');c.say('La la la laaa !',1800);
+  await c.rep(7,ms/7,i=>{c.f({mouth:'open'},230);c.k('root',{y:-300});c.h('bunTop',{r:i%2?4:-4},300);});});
+MUSIC('Xylophone gourmand','Chaque ingrédient sonne une note quand il bondit.',async c=>{
+  const l=LAY.slice().reverse().concat(LAY.slice(1,5));const n=[60,62,64,65,67,69,71,72,69,67];
+  for(let i=0;i<l.length;i++){c.k(l[i],{y:-700});Snd.seq([[n[i],.5]],200,{type:'triangle',v:.25});await c.w(170);}c.say('Do ré mi fa sol !',1200);});
+MUSIC('Trompette','Gaston souffle dans une trompette imaginaire.',async c=>{
+  c.f({mouth:'o',brow:'up'},1700);c.h('armR',{r:-150},1700);const ms=Snd.seq([[67,.4],[67,.4],[67,.4],[72,1.4]],130,{type:'sawtooth',v:.14});c.say('Ta-ta-ta-taaa !',1500);
+  await c.rep(4,ms/4,()=>c.k('bunTop',{r:500}));},['armR']);
+MUSIC('Tambour de steak','Les bras tapent sur le steak comme sur un tambour.',async c=>{
+  const ms=Snd.beat('kskskssk',130);await c.rep(8,ms/8,i=>{c.k('patty',{sy:-5,sx:2});c.k(i%2?'armR':'armL',{r:(i%2?-1:1)*-500});});c.pop('BRRR-POUM','#ffd23a','patty');},['patty']);
+MUSIC('Sirène de pompiers','Une sirène en « wiiou » pendant que l’écran clignote.',async c=>{
+  for(let i=0;i<3;i++){Snd.play('up',.8);c.flash('#ff2d3d',200);c.k('root',{r:i%2?500:-500});await c.w(500);Snd.play('down',.8);c.flash('#2d6bff',200);await c.w(500);}c.say('Wiiou wiiou !',900);});
+MUSIC('Opéra','Gaston prend une pose dramatique et chante un contre-ut.',async c=>{
+  c.hs(['armL','armR'],{r:100},2600);c.h('armR',{r:-100},2600);c.h('patty',{sx:1.1,sy:1.1},2600);c.f({mouth:'open',eyes:'closed',brow:'up'},2600);
+  Snd.vseq([[72,.5],[74,.5],[76,.5],[79,2.2]],100,'a');c.say('Mi mi mi miiii !',2200);await c.rep(10,200,i=>c.k('lettuce',{r:(i%2?1:-1)*300}));
+  Snd.play('glass');c.fx.stars(at('mouth').x,at('mouth').y,12);c.flash('#fff',150);});
+MUSIC('Robot burger','Gaston passe en mode robot : bip, boup, bip.',async c=>{
+  c.f({eyes:'text',eyeText:'01',mouth:'teeth'},2000);c.say('BIP BOUP. JE SUIS UN ROBOT.',1800);await c.rep(8,220,i=>{Snd.play('robot');c.h('bunTop',{r:i%2?10:-10},200);c.h('armL',{r:i%2?40:-10},200);});});
+MUSIC('Boule à facettes','Piste de danse, lumières colorées et basse profonde.',async c=>{
+  c.disco(4000);c.acc('shades',4000);const ms=Snd.beat('b.hb.sb.hb.sb.hb.s',118);c.say('Saturday burger fever !',1500);
+  await c.rep(14,ms/14,i=>{c.k('root',{y:-380,r:(i%2?-1:1)*200});c.h('armR',{r:i%2?-160:-40},250);c.h('armL',{r:i%2?60:20},250);});},['legL','legR']);
+MUSIC('Air guitare','Un solo de guitare électrique, secousses incluses.',async c=>{
+  c.acc('shades',2400);c.f({mouth:'teeth',brow:'angry'},2400);for(let i=0;i<4;i++){[110,165,220].forEach(f=>Snd.play('boing',.1));Snd.seq([[40+i,.4]],150,{type:'sawtooth',v:.2});Snd.seq([[47+i,.4]],150,{type:'sawtooth',v:.14});c.shake(5,150);c.k('root',{r:i%2?-600:600});c.k('armR',{r:900});await c.w(550);}
+  c.say('ROCK !',900);},['armL']);
+MUSIC('Berceuse','Une douce berceuse… Gaston s’endort un instant.',async c=>{
+  const p=c.at('bunTop');Snd.seq([[67,.5],[67,.5],[74,.5],[74,.5],[76,.5],[76,.5],[74,1]],90,{type:'sine',v:.2});c.f({eyes:'closed',mouth:'tiny'},3200);
+  c.fx.emoji('🌙',p.x,p.y-80,2,{vy:-30,g:0});c.fx.emoji('⭐',p.x,p.y,5,{vy:-60,g:0});await c.rep(5,600,i=>c.h('root',{r:i%2?-4:4},800,{k:20,c:5}));Snd.play('yawn');});
+MUSIC('Jingle du fast-food','Un jingle accrocheur, cinq notes et un grand sourire.',async c=>{
+  const ms=Snd.seq([[67,.35],[67,.35],[67,.35],[72,.35],[76,1.2]],150,{type:'square',v:.14});c.say('Pa-pa-pa-pa-paaa !',1500);c.f({eyes:'happy',mouth:'grin'},ms+300);
+  await c.rep(5,ms/5,()=>c.k('root',{y:-420}));c.fx.confetti(at('patty').x,at('patty').y,36);});
+MUSIC('Rap du burger','Quatre rimes sur les ingrédients, avec le groove.',async c=>{
+  Snd.beat('k.s.k.s.k.s.k.s.',100);const w=['Pain !','Steak !','Fromage !','Salade !'];
+  for(let i=0;i<4;i++){Snd.vseq([[48,.5],[55,.5]],100,i%2?'o':'a');say(w[i],700);c.k('bunTop',{y:-500});c.f({mouth:'open'},300);c.k(i%2?'armR':'armL',{r:(i%2?-1:1)*700});await c.w(560);}c.say('Yo ! Gaston dans la place !',1200);});
+MUSIC('Yodel','Un yodel alpin qui fait faire la girouette à son pain.',async c=>{
+  const n=[[55,.3],[67,.3],[55,.3],[67,.3],[52,.3],[64,.3],[55,.6]];const ms=Snd.vseq(n,150,'o');c.say('Yo-lo-lé-hi-hou !',1500);
+  await c.rep(7,ms/7,i=>{c.k('bunTop',{r:(i%2?-1:1)*900,y:i%2?-300:0});c.f({mouth:i%2?'o':'open'},200);});});
+MUSIC('Grand concert','Le final : disco, mélodie, batterie et pluie de confettis.',async c=>{
+  c.disco(5000);c.acc('crown',5000);Snd.beat('k.hsk.hsk.hsk.hs',128);Snd.seq([[60,.5],[64,.5],[67,.5],[72,1],[67,.5],[72,1.5]],128,{type:'triangle',v:.2});
+  c.say('Merci Paris !',1500);await c.rep(10,380,i=>{c.k('root',{y:-420,r:(i%2?-1:1)*180});c.hs(['armL','armR'],{r:(i%2?1:-1)*90},300);if(i%3===0)c.fx.confetti(at('bunTop').x,at('bunTop').y,22);});Snd.play('tada');});
+
+/* ===== 7) GESTES (15) ===== */
+GEST('dbl_top','Deux fois bonjour','Double-tape le haut : le pain salue deux fois, bras levés.',async c=>{
+  c.hs(['armL','armR'],{r:100},900);c.h('armR',{r:-100},900);c.f({eyes:'happy',mouth:'grin'},900);c.s('chime');c.s('ding');await c.rep(2,260,()=>c.k('bunTop',{r:-500}));c.say('Bonjour ! Bonjour !',900);});
+GEST('dbl_face','Double vision','Double-tape le visage : les yeux se séparent et dansent.',async c=>{
+  c.f({eyes:'text',eyeText:'?',pupils:'crazy'},1400);c.s('ding');c.s('ding',1.3);await c.rep(8,120,i=>{c.k('eyeL',{x:i%2?-500:500});c.k('eyeR',{x:i%2?500:-500});});c.say('J’en vois deux !',900);});
+GEST('dbl_ingr','Valse des couches','Double-tape une garniture : les couches sautent en dominos.',async c=>{
+  const l=LAY.slice().reverse();for(let i=0;i<l.length;i++){c.k(l[i],{y:-800});c.s('pop',.8+i*.15);await c.w(100);}await c.w(150);for(let i=0;i<l.length;i++){c.k(l[i],{y:-800});c.s('pop',1.2+i*.1);await c.w(100);}});
+GEST('dbl_low','Tap-tap','Double-tape le bas : claquettes avec les pieds et les mains.',async c=>{
+  await c.rep(6,150,i=>{c.k(i%2?'legR':'legL',{y:600});c.k('root',{y:-250});c.s(i%2?'tick':'tock');if(i%2)c.s('clap');c.h(i%2?'armR':'armL',{r:(i%2?-1:1)*70},120);});});
+GEST('dbl_bg','Écho de burger','Double-tape le fond : Gaston laisse des images fantômes.',async c=>{
+  c.ghost(4);c.s('magic');c.k('root',{r:300});c.f({mouth:'o'},800);c.say('Écho… écho… écho…',1200);await c.w(500);c.ghost(3);});
+GEST('hold_top','Massage crânien','Maintiens le haut : Gaston ronronne de bonheur.',async c=>{
+  const p=c.at('bunTop');c.f({eyes:'closed',mouth:'smile',blush:1},2000);c.s('mmm');c.fx.emoji('💗',p.x,p.y,5);c.say('Mmmh… continue…',1700);await c.rep(6,300,i=>c.h('bunTop',{r:i%2?3:-3},320));});
+GEST('hold_face','Regard hypnotique','Maintiens le visage : ses yeux t’hypnotisent.',async c=>{
+  const p=c.at('eyeL');c.f({eyes:'spiral',mouth:'flat'},2200);c.s('up',.5);await c.rep(4,350,()=>{c.fx.ring(p.x+(at('eyeR').x-p.x)/2,p.y,'#fff',20);c.s('zap');});c.say('Tu as… faim…',1300);});
+GEST('hold_ingr','Gonflette','Maintiens une garniture : tout gonfle, puis POUF !',async c=>{
+  c.hs(MID,{sx:1.2,sy:1.2},900,{k:20,c:8});c.s('up',.5);c.f({mouth:'tiny',sweat:1},900);await c.w(900);c.hs(MID,{sx:.9},200);c.s('pop');c.fx.confetti(at('patty').x,at('patty').y,36);c.ks(MID,{sx:-6});});
+GEST('hold_low','Fou rire','Maintiens le bas : Gaston est pris d’un fou rire.',async c=>{
+  c.f({eyes:'happy',mouth:'open',tear:1},2200);c.s('laugh',10);await c.rep(14,150,i=>{c.k('root',{y:-300,r:(i%2?-1:1)*150});c.k('armL',{r:500});c.k('armR',{r:-500});});c.say('Hahaha ! Stop !',900);});
+GEST('hold_bg','Lévitation','Maintiens le fond : Gaston flotte dans les airs.',async c=>{
+  c.h('root',{y:-130},2300,{k:12,c:5});c.f({mouth:'o',eyes:'closed'},2300);c.s('ooh');c.say('Je flotte !',1500);const p=c.at('bunTop');c.fx.stars(p.x,p.y,10);await c.w(1000);c.fx.stars(p.x,p.y,8);});
+GEST('swipe_h','Tranche ninja','Balaie vite à l’horizontale : le pain est tranché en deux.',async c=>{
+  const p=c.at('lettuce');c.fx.slash(p.x-200,p.y-20,p.x+200,p.y+20);c.s('whoosh',2);c.s('snap');await c.w(150);c.h('bunTop',{x:90,r:12},900);c.f({mouth:'o'},900);c.say('Trop rapide pour moi !',1300);await c.w(900);c.s('pop');});
+GEST('swipe_v','Fusée burger','Balaie vite à la verticale : décollage immédiat !',async c=>{
+  const p=c.at('bunBottom');c.fly('root',{y:-1000},700);c.s('rocket'===0?'':'whoosh',.5);c.fx.smoke(p.x,p.y+60,10);c.fx.emoji('🔥',p.x,p.y+50,6,{vy:200});c.say('3… 2… 1… DÉCOLLAGE !',1100);await c.w(1900);c.s('pop');});
+GEST('shake','Secousse de milkshake','Secoue ton doigt : les ingrédients se mélangent !',async c=>{
+  c.s('stretch');c.f({eyes:'spiral',mouth:'wavy'},1400);LAY.forEach(p=>c.h(p,{x:rnd(-45,45),r:rnd(-15,15)},1300));c.say('Brassé, pas secoué !',1300);await c.rep(10,100,()=>{c.ks(MID,{x:rnd(-900,900)});c.s('squeak',rnd(.6,1.6));});});
+GEST('circle','Manège','Dessine des cercles : Gaston tourne en rond.',async c=>{
+  c.s('up');c.say('Wiiiii !',1400);c.f({eyes:'happy',mouth:'open'},1600);const t0=nowMs();await c.rep(40,40,()=>{const q=(nowMs()-t0)/1600;const a=q*Math.PI*4;c.sn('root',{x:Math.cos(a)*70,y:Math.sin(a)*40-40});SP.root.t.x=Math.cos(a)*70;SP.root.t.y=Math.sin(a)*40-40;SP.root.u.x=SP.root.u.y=nowMs()+120;});});
+GEST('lose','Perte de contrôle','Dix tapotements d’affilée : ses membres n’obéissent plus !',async c=>{
+  c.say('Je… ne… contrôle… plus… mes… membres !',2600);c.f({eyes:'text',eyeText:'?!',pupils:'crazy',mouth:'wavy'},3000);
+  await c.rep(25,120,i=>{['armL','armR','legL','legR','bunTop','lettuce','tomato','cheese','patty','bunBottom'].forEach(p=>c.h(p,{x:rnd(-30,30),y:rnd(-20,20),r:rnd(-35,35)},130));if(i%4===0)c.s(pickOf(['squeak','boing','pouet','hic']),rnd(.7,1.5));});});
+
+/* ===== 8) SECRETS (15) ===== */
+SECRET('gold','Burger doré','Un éclat rare, quelques secondes en or massif.','Parfois, sans prévenir, un éclat doré traverse Gaston.',async c=>{
+  c.tint('gold',4500);c.acc('crown',4500);c.f({eyes:'happy',mouth:'grin'},4500);c.s('tada');c.s('coin');c.flash('#ffe27a',300);c.say('Je suis en or massif !',2200);
+  await c.rep(6,500,()=>{const p=at('bunTop');c.fx.stars(p.x,p.y,10);c.k('root',{y:-600});c.s('ding');});});
+SECRET('rainbow','Burger arc-en-ciel','Les jours de chance, Gaston passe par toutes les couleurs.','Les jours de chance, Gaston se met en couleurs.',async c=>{
+  c.tint('rainbow',4200);c.s('magic');c.f({eyes:'happy',mouth:'open'},4200);c.say('Je vois la vie en couleurs !',2000);
+  await c.rep(8,450,i=>{const p=at('bunTop');c.fx.emoji('🌈',p.x,p.y,2,{vy:-120});c.k('root',{r:(i%2?-1:1)*500});});});
+SECRET('minis','Pluie de mini-burgers','Il pleut des burgers dans tout l’écran.','Il neige parfois des burgers.',async c=>{
+  c.fx.rain('🍔',30);c.s('magic');c.say('Il pleut des burgers !',2200);c.f({eyes:'happy',mouth:'open'},3200);c.hs(['armL','armR'],{r:90},3000);c.h('armR',{r:-90},3000);await c.w(1500);c.fx.rain('🍔',16);});
+SECRET('sleep','Sieste simulée','Gaston fait semblant de dormir, un œil… fermé.','Laisse-le tranquille un petit moment…',async c=>{
+  c.say('Zzz… (je dors vraiment)',1800);for(;;){c.f({eyes:'closed',mouth:'cat',lids:1},1400);c.k('root',{sy:-.5});c.s('snore');const p=at('bunTop');c.fx.emoji('💤',p.x+70,p.y-60,1,{vy:-110,g:0,s:1.3});await c.w(1250);}});
+SECRET('jump','Sursaut !','Réveillé en sursaut : il saute au plafond.','Réveille-le en sursaut.',async c=>{
+  c.k('root',{y:-1800,sy:2});c.wide(1600);c.f({mouth:'o',sweat:1},1600);c.s('gasp');c.shake(8,300);c.say('AH ! Je ne dormais pas !',1900);const p=at('bunTop');c.fx.emoji('💦',p.x,p.y,6);});
+SECRET('dream','Rêve de frites','Il rêve de frites croustillantes dans une bulle.','Que rêvent les burgers quand on les oublie ?',async c=>{
+  for(;;){const p=at('bunTop');c.f({eyes:'closed',mouth:'smile',blush:1,lids:1},1700);c.fx.emoji('🍟',p.x+70,p.y-70,1,{vy:-50,g:0,s:1.8});c.say('Mmh… des frites…',1500);c.s('mmm');await c.w(1700);}});
+SECRET('dance','Danse spontanée','Sans raison, Gaston se met à danser tout seul.','Si on l’oublie vraiment longtemps…',async c=>{
+  S.asleep=false;c.disco(5200);c.acc('shades',5200);Snd.beat('b.hb.sb.hb.sb.hb.sb.hb.s',118);c.say('Je ne peux pas m’en empêcher !',1800);
+  await c.rep(14,380,i=>{c.k('root',{y:-420,r:(i%2?-1:1)*250});c.h('armR',{r:i%2?-160:-30},300);c.h('armL',{r:i%2?30:160},300);c.k(i%2?'legL':'legR',{y:600});});S.idleStage=4;});
+SECRET('perfect','Le burger parfait','Pain, salade, tomate, fromage, steak, pain : monté dans l’ordre.','Comme on le monte : du chapeau jusqu’à la base.',async c=>{
+  c.s('tada');c.acc('halo',3500);c.acc('crown',3500);c.f({eyes:'happy',mouth:'grin',blush:.8},3500);c.say('Parfaitement monté !',2200);
+  for(let i=0;i<LAY.length;i++){c.k(LAY[i],{y:-800});Snd.play('ding',1+i*.12);await c.w(200);}c.fx.confetti(at('bunTop').x,at('bunTop').y,60);c.fx.rain('✨',14);});
+SECRET('reversed','Burger à l’envers','Monté à l’envers, Gaston se retrouve la tête en bas.','Et si on le montait à l’envers ?',async c=>{
+  c.s('whoosh');await c.tw('root','r',180,600);c.h('root',{r:180},1700,{k:80,c:14});c.f({mouth:'frown',pupils:'roll'},1700);c.say('Tout est à l’envers !',1600);await c.w(1700);c.s('boing');});
+SECRET('sneeze','Éternuement géant','Son nez n’aime pas qu’on insiste : ATCHOUM !','Son nez n’aime pas qu’on insiste.',async c=>{
+  c.f({mouth:'o',eyes:'closed',brow:'worry'},1000);c.s('sniff');await c.w(400);c.s('sniff');c.h('bunTop',{y:-18,sy:1.04},500);await c.w(500);
+  c.s('whoosh');c.k('root',{y:-500,sy:-3,x:-300});c.shake(14,400);c.flash('#fff',120);const p=at('mouth');c.fx.drops(p.x,p.y,'#9be0ff',30,2);c.fx.emoji('💨',p.x,p.y,5);c.say('ATCHOUM !',1300);c.s('pouet');});
+SECRET('earthquake','Tremblement de terre','Le sol tremble : Gaston s’accroche à ses fondations.','Reste appuyé sur ses fondations.',async c=>{
+  c.shake(12,3000);c.f({sweat:1,mouth:'wavy',brow:'worry'},3000);c.say('Ça tremble !',1500);const p=at('bunBottom');
+  await c.rep(30,100,i=>{c.s(i%3===0?'stomp':'tick');c.ks(LAY,{x:rnd(-700,700)});c.ks(['armL','armR','legL','legR'],{r:rnd(-600,600)});if(i%5===0)c.fx.smoke(p.x+rnd(-100,100),p.y+60,3);});});
+SECRET('explosion','Explosion de cuisine','Trop de touches, trop vite : la cuisine explose !','Trop de touches, trop vite.',async c=>{
+  c.tint('rage',700);c.s('zap');await c.w(300);c.flash('#fff',200);c.shake(16,600);c.s('splat');c.s('whoosh');
+  LAY.forEach(p=>c.fly(p,{x:rnd(-300,300),y:rnd(-500,-200),r:rnd(-720,720)},700));c.fx.confetti(at('patty').x,at('patty').y,60,1.4);c.say('BOUM !',900);await c.w(2200);c.s('pop');c.say('Tout est à sa place !',1200);});
+SECRET('moonwalk','Moonwalk','Gaston glisse en arrière avec des lunettes noires.','Un pied après l’autre : gauche, droite, gauche, droite.',async c=>{
+  c.acc('shades',4800);c.f({mouth:'smirk'},4800);Snd.beat('b.hb.hb.hb.hb.h',100);c.say('Hee-hee !',1000);
+  await Promise.all([c.tw('root','x',-110,3500,lin),c.rep(10,340,i=>{c.h(i%2?'legL':'legR',{y:-16,r:i%2?14:-14},280);c.k('root',{y:-120});})]);Snd.play('wow');});
+SECRET('catch','Attrapé au vol','Tu as attrapé un ingrédient en plein vol : bravo !','Ce qui s’envole peut s’attraper.',async c=>{
+  const p=c.arg.part;if(p&&SP[p]){c.sn(p,{x:0,y:0,r:0,sx:1,sy:1});c.spr(p,200,11,1);for(const a of AX)SP[p].t[a]=REST[a];}
+  c.s('coin');c.s('tada');c.f({eyes:'happy',mouth:'grin'},1500);c.hs(['armL','armR'],{r:120},1000);c.h('armR',{r:-120},1000);c.say('Je l’ai eu !',1300);c.fx.confetti(at(p||'patty').x,at(p||'patty').y,30);});
+SECRET('corners','Aux quatre coins','Les quatre coins de l’écran touchés : feu d’artifice !','Les quatre coins du monde.',async c=>{
+  c.disco(4200);c.s('tada');const W=innerWidth,H=innerHeight;const C=[[60,100],[W-60,100],[W-60,H-60],[60,H-60]];
+  await c.rep(4,500,i=>{c.fx.confetti(C[i][0],C[i][1],34);c.flash('#ffd23a',200);c.k('root',{r:(i%2?-1:1)*400});c.s('ding',1+i*.12);});await c.spin3d('root',2,900,'sx',true);c.say('Tour du monde !',1200);});
+
+/* ===== 9) COMBOS (10) ===== */
+COMBO('eyes','Tourbillon des yeux','Touche les deux yeux, l’un après l’autre, très vite.',async c=>{
+  c.f({eyes:'spiral',mouth:'wavy'},1800);c.s('down',.9);c.say('Je vois des étoiles !',1400);const p=at('bunTop');c.fx.stars(p.x,p.y,10);await c.rep(8,200,i=>c.k('root',{r:(i%2?-1:1)*400-(0)}));});
+COMBO('sandwich','Sandwich-clap','Touche le pain du haut puis celui du bas : clap !',async c=>{
+  c.h('bunTop',{y:60,sy:.9},300);c.h('bunBottom',{y:-50,sy:.9},300);c.hs(MID,{sy:.4,sx:1.15},300);await c.w(310);c.s('clap');c.shake(8,250);c.ks(MID,{x:600});c.fx.confetti(at('patty').x,at('patty').y,24);c.pop('SANDWICH !','#fff','patty');});
+COMBO('swap','Chassé-croisé','Touche la salade puis le fromage : ils échangent leurs places.',async c=>{
+  c.h('lettuce',{y:46},1200,{k:40,c:9});c.h('cheese',{y:-46},1200,{k:40,c:9});c.s('whoosh');c.say('Changement de place !',1300);await c.w(1200);c.s('pop');});
+COMBO('tango','Tango tomate-steak','Touche la tomate puis le steak : un tango endiablé.',async c=>{
+  c.f({brow:'angry',mouth:'smirk'},2200);await c.rep(8,260,i=>{const s=i%2?-1:1;c.k('tomato',{x:s*900});c.k('patty',{x:-s*900});c.s('bass',43+(i%3)*2);if(i%2)c.s('tick');});c.say('¡Olé!',900);});
+COMBO('hug','Câlin','Touche les deux bras : Gaston se fait un câlin.',async c=>{
+  const p=at('patty');c.h('armL',{r:-75},1500);c.h('armR',{r:75},1500);c.f({eyes:'happy',blush:1,mouth:'smile'},1500);c.s('ooh');c.fx.emoji('💞',p.x,p.y,6);c.say('Câliiin !',1300);});
+COMBO('legs','Pas de deux','Touche les deux jambes : french cancan !',async c=>{
+  const ms=Snd.seq([[67,.25],[71,.25],[74,.25],[79,.5],[74,.25],[79,.5]],160,{type:'square',v:.1});await c.rep(8,ms/8,i=>{c.k(i%2?'legR':'legL',{r:(i%2?-1:1)*-1200,y:-300});c.k('root',{y:-300});});});
+COMBO('clown','Grimace de clown','Touche la bouche puis le nez : un vrai clown.',async c=>{
+  c.f({nose:'red',tongue:1,mouth:'grin',pupils:'cross'},2200);c.acc('partyhat',2200);c.s('honk',1.6);c.s('pouet');c.say('Le clown du burger !',1400);c.k('root',{r:300});});
+COMBO('hamster','Joues de hamster','Touche les deux joues : hamster gourmand.',async c=>{
+  c.hs(['cheekL','cheekR'],{sx:2.1,sy:1.9},1300,{k:50,c:8});c.f({mouth:'tiny',blush:1},1300);c.s('up',.5);for(let i=0;i<3;i++){Snd.play('crunch');await c.w(280);}c.s('pop');c.ks(['cheekL','cheekR'],{sx:-9});});
+COMBO('party','Surprise-party','Touche un œil puis la bouche : fête surprise !',async c=>{
+  c.acc('partyhat',2500);c.f({eyes:'happy',mouth:'open'},2500);c.s('party');c.fx.confetti(at('bunTop').x,at('bunTop').y,70,1.4);c.fx.rain('🎈',10,{g:-40});c.say('SURPRISE !',1600);c.k('root',{y:-700});});
+COMBO('magic','Tour de magie','Touche trois parties différentes en moins de 1,5 s : abracadabra !',async c=>{
+  const p=at('bunTop');c.acc('tophat',2800);c.s('magic');c.fx.smoke(p.x,p.y,12);c.fx.stars(p.x,p.y,16);c.fx.emoji('🐇',p.x,p.y-40,1,{vy:-300,g:300,s:1.6});c.say('Abracadabra !',1500);c.h('armR',{r:-120},1500);});
+
+/* ---------- vérification interne des effectifs ---------- */
+const EXPECT={touch:25,pull:20,face:20,phys:20,ingr:20,music:15,gest:15,secret:15,combo:10};
+for(const k in EXPECT)if(CNT[k]!==EXPECT[k])console.warn('Catégorie',k,':',CNT[k],'au lieu de',EXPECT[k]);
+
+/* ---------- index de déclenchement ---------- */
+const POOL={};
+for(const r of LIB){
+  if(r.cat==='touch'||r.cat==='ingr'||r.cat==='face'){(POOL[r.part]=POOL[r.part]||[]).push(r);}
+  else if(r.cat==='music'&&r.parts){for(const p of r.parts)(POOL[p]=POOL[p]||[]).push(r);}
+}
+const PHYSL=LIB.filter(r=>r.cat==='phys'),MUSL=LIB.filter(r=>r.cat==='music'),PULLS=LIB.filter(r=>r.cat==='pull');
+const GST={},SEC={},CMB={};
+for(const r of LIB){if(r.cat==='gest')GST[r.key]=r;if(r.cat==='secret')SEC[r.key]=r;if(r.cat==='combo')CMB[r.key]=r;}
+const found=r=>!!SAVE.found[r.id];
+function pick(list){
+  if(!list||!list.length)return null;
+  let cand=list.filter(r=>r!==S.last);if(!cand.length)cand=list;
+  const nu=cand.filter(r=>!found(r));
+  return (nu.length&&Math.random()<.8)?pickOf(nu):pickOf(cand);
+}
+
+/* ---------- lancer une réaction ---------- */
+function play(r,arg){
+  if(!r)return Promise.resolve();
+  const gen=++S.gen;const c=makeCtx(gen,arg);S.last=r;S.cur=r;
+  discover(r);
+  return Promise.resolve().then(()=>r.run(c)).catch(e=>{if(e!==CANCEL)console.error('Réaction',r.id,e);});
+}
+function discover(r){
+  if(SAVE.found[r.id])return;
+  SAVE.found[r.id]=Date.now();save();updateCount();toast(r);
+  if(r.secret){Snd.play('magic');}
+  if(Object.keys(SAVE.found).length>=LIB.length)setTimeout(finale,1800);
+}
+function finale(){
+  say('Tu as tout découvert ! Gaston est comblé 🍔💛',4000);Snd.play('tada');
+  for(let i=0;i<5;i++)setTimeout(()=>FX.confetti(rnd(100,innerWidth-100),innerHeight*.5,60,1.3),i*350);
+}
+
+/* ---------- entrées : Pointer Events ---------- */
+const app=$('#app');
+const GROUP={bunTop:'top',seed:'top',eyeL:'face',eyeR:'face',nose:'face',mouth:'face',cheekL:'face',cheekR:'face',brow:'face',lettuce:'ingr',tomato:'ingr',cheese:'ingr',patty:'ingr',bunBottom:'low',armL:'low',armR:'low',legL:'low',legR:'low',bg:'bg'};
+const LAYER={bunTop:'bunTop',seed:'bunTop',eyeL:'bunTop',eyeR:'bunTop',nose:'bunTop',mouth:'bunTop',cheekL:'bunTop',cheekR:'bunTop',brow:'bunTop',lettuce:'lettuce',tomato:'tomato',cheese:'cheese',patty:'patty',bunBottom:'bunBottom',armL:'armL',armR:'armR',legL:'legL',legR:'legR',bg:'bg'};
+const PERFECT=['bunTop','lettuce','tomato','cheese','patty','bunBottom'];
+const REVERSED=PERFECT.slice().reverse();
+const PAIRS=[['eyeL','eyeR','eyes'],['bunTop','bunBottom','sandwich'],['lettuce','cheese','swap'],['tomato','patty','tango'],['armL','armR','hug'],['legL','legR','legs'],['mouth','nose','clown'],['cheekL','cheekR','hamster']];
+const G=new Map();
+const partOf=e=>{const t=e.target;const el=t&&t.closest?t.closest('[data-part]'):null;return el?el.getAttribute('data-part'):'bg';};
+const pinPart=p=>({seed:'bunTop',brow:'bunTop'}[p]||p);
+function touch(){S.lastTouch=nowMs();S.hinted=true;if(S.idleStage>0&&!S.asleep)S.idleStage=0;}
+function look(e){const p=toSvg(e.clientX,e.clientY);LKT.x=p.x;LKT.y=p.y;}
+
+function press(g){const p=pinPart(g.part);if(SP[p]&&p!=='root'){g.pressed=p;pin(p,{sx:1.05,sy:.93});}}
+function unpress(g){if(g.pressed){unpin(g.pressed);g.pressed=null;}}
+
+app.addEventListener('pointerdown',e=>{
+  e.preventDefault();Snd.unlock();
+  try{app.setPointerCapture(e.pointerId)}catch(_){}
+  touch();look(e);
+  if(S.asleep){S.asleep=false;S.idleStage=0;S.taps.length=0;play(SEC.jump);G.set(e.pointerId,{dead:true});return;}
+  const part=partOf(e);
+  const g={id:e.pointerId,part,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,t0:nowMs(),drag:false,long:false,fired:false,pull:false,pins:[],samples:[],rev:0,revT:[],lastEx:e.clientX,dir:0,ang:0,prevA:null,pressed:null,tm:null,tm2:null};
+  G.set(e.pointerId,g);press(g);
+  g.tm=setTimeout(()=>holdFire(g),600);
+  g.tm2=setTimeout(()=>holdLong(g),2700);
+},{passive:false});
+
+app.addEventListener('pointermove',e=>{
+  look(e);
+  const g=G.get(e.pointerId);if(!g||g.dead)return;
+  const t=nowMs();const dx=e.clientX-g.x0,dy=e.clientY-g.y0;const d=Math.hypot(dx,dy);
+  g.samples.push([t,e.clientX,e.clientY]);while(g.samples.length&&t-g.samples[0][0]>900)g.samples.shift();
+  g.x=e.clientX;g.y=e.clientY;
+  if(!g.drag&&d>14){g.drag=true;clearTimeout(g.tm);clearTimeout(g.tm2);unpress(g);g.pull=g.part!=='bg';}
+  if(!g.drag)return;
+  dragMove(g,e);
+  if(!g.fired)detectShake(g,e,t);
+  if(!g.fired)detectCircle(g,t);
+},{passive:false});
+
+function dragMove(g,e){
+  const a=toSvg(e.clientX,e.clientY),b=toSvg(g.x0,g.y0);const X=a.x-b.x,Y=a.y-b.y;g.X=X;g.Y=Y;
+  if(g.part==='bg'){pin('root',{x:clamp(X*.12,-26,26),r:clamp(X*.03,-6,6)});g.pins=['root'];return;}
+  const p=pinPart(g.part);const s=SP[p];if(!s)return;
+  const lim=(v,m)=>clamp(v,-m,m);let pr;
+  if(p==='armL'||p==='armR'){
+    const vx=a.x-s.px,vy=a.y-s.py;const ang=Math.atan2(-vx,vy)*180/Math.PI;pr={r:ang,sy:clamp(Math.hypot(vx,vy)/55,.8,3.2)};
+  }else if(p==='legL'||p==='legR'){pr={y:lim(Y*.7,110),x:lim(X*.5,60),r:lim(X*.3,35),sy:1+Math.max(0,Y)/220};}
+  else if(p==='eyeL'||p==='eyeR'||p==='mouth'||p==='nose'||p==='cheekL'||p==='cheekR'){pr={x:lim(X*.6,70),y:lim(Y*.6,70),sx:1+Math.abs(X)/90,sy:1+Math.abs(Y)/90};}
+  else if(p==='bunTop'){pr={x:lim(X*.8,150),y:lim(Y*.8,170),r:lim(X*.06,18),sx:1+Math.abs(X)/420,sy:1+Math.abs(Y)/320};}
+  else if(p==='lettuce'){pr={x:lim(X*.8,170),y:lim(Y*.7,150),sx:1+Math.abs(X)/150,sy:1};}
+  else{pr={x:lim(X*.8,160),y:lim(Y*.8,150),sx:1+Math.abs(X)/260,sy:1+Math.abs(Y)/200};}
+  pin(p,pr);g.pins=[p];
+  if(p!=='root')pin('root',{r:clamp(X*.02,-5,5)});
+  if(!g.pins.includes('root'))g.pins.push('root');
+}
+function detectShake(g,e,t){
+  const x=e.clientX;if(g.dir===0){g.dir=Math.sign(x-g.lastEx)||0;g.lastEx=x;return;}
+  const dd=Math.sign(x-g.lastEx);
+  if(dd!==0&&dd!==g.dir){if(Math.abs(g.lastEx-(g.extX===undefined?g.lastEx:g.extX))>26||true){}
+    // changement de sens : on valide si l'amplitude depuis le dernier extremum est suffisante
+    if(Math.abs(g.lastEx-(g.extX===undefined?g.x0:g.extX))>30){g.revT.push(t);g.extX=g.lastEx;g.revT=g.revT.filter(q=>t-q<1300);if(g.revT.length>=5){g.fired=true;shakeFire(g);return;}}
+    g.dir=dd;
+  }
+  if((g.dir>0&&x>g.lastEx)||(g.dir<0&&x<g.lastEx)||g.dir===0)g.lastEx=x;
+}
+function shakeFire(g){cleanPins(g);unpress(g);play(GST.shake);}
+function detectCircle(g,t){
+  const s=g.samples;if(s.length<6)return;
+  let cx=0,cy=0;for(const q of s){cx+=q[1];cy+=q[2];}cx/=s.length;cy/=s.length;
+  const r=Math.hypot(g.x-cx,g.y-cy);if(r<18){g.prevA=null;return;}
+  const a=Math.atan2(g.y-cy,g.x-cx);
+  if(g.prevA!==null){let da=a-g.prevA;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;g.ang+=da;}
+  g.prevA=a;
+  if(Math.abs(g.ang)>7){g.fired=true;cleanPins(g);unpress(g);play(GST.circle);}
+}
+function cleanPins(g){for(const p of g.pins)unpin(p);g.pins=[];}
+
+function holdFire(g){
+  if(!G.has(g.id)||g.drag||g.dead)return;
+  g.long=true;unpress(g);S.taps.length=0;
+  const grp=GROUP[g.part]||'bg';play(GST['hold_'+grp]);
+}
+function holdLong(g){
+  if(!G.has(g.id)||g.drag||g.dead)return;
+  if(g.part==='nose')play(SEC.sneeze);else if(g.part==='bunBottom')play(SEC.earthquake);
+}
+
+function endPtr(e){
+  const g=G.get(e.pointerId);if(!g)return;G.delete(e.pointerId);
+  Snd.unlock();
+  if(g.dead)return;
+  clearTimeout(g.tm);clearTimeout(g.tm2);unpress(g);
+  try{app.releasePointerCapture(e.pointerId)}catch(_){}
+  const dx=g.x-g.x0,dy=g.y-g.y0,d=Math.hypot(dx,dy);const dt=nowMs()-g.t0;
+  cleanPins(g);
+  if(e.type==='pointercancel')return;
+  if(g.drag){
+    if(g.fired)return;
+    if(d>150&&dt<300){ // balayage rapide
+      play(Math.abs(dx)>=Math.abs(dy)?GST.swipe_h:GST.swipe_v);return;}
+    if(d<40){onTap(g);return;}
+    if(g.part!=='bg')pullRelease(g,dx,dy,d);
+    else if(d>80)play(pick(PHYSL),{dir:dx>0?1:-1});
+    return;
+  }
+  if(!g.long&&e.type==='pointerup')onTap(g);
+}
+app.addEventListener('pointerup',endPtr);
+app.addEventListener('pointercancel',endPtr);
+app.addEventListener('lostpointercapture',e=>{const g=G.get(e.pointerId);if(g&&!g.drag&&!g.long){/* ignoré : pointerup suit */}});
+
+function pullRelease(g,dx,dy,d){
+  const key=(g.part==='eyeL'||g.part==='eyeR')?'eye':pinPart(g.part);
+  const dir=Math.abs(dy)>Math.abs(dx)?(dy<0?'up':'down'):'side';
+  const cands=PULLS.filter(r=>r.part===key);
+  let r=cands.find(x=>x.dir===dir)||cands.find(x=>x.dir==='vert'&&dir!=='side')||cands.find(x=>x.dir==='any');
+  if(!r){ // pas de réaction dédiée : petite réponse élastique, non comptée
+    Snd.play('boing',1.2);const p=pinPart(g.part);if(SP[p])kick(p,{y:-500,sy:-3});return;}
+  play(r,{dx,dy,dist:d,part:g.part});
+}
+
+/* ---------- taps : secrets, combos, doubles-taps, rares ---------- */
+const CORN=(x,y)=>{const W=innerWidth,H=innerHeight;const l=x<W*.22,r=x>W*.78,t=y<H*.22,b=y>H*.78;if(t&&l)return'tl';if(t&&r)return'tr';if(b&&r)return'br';if(b&&l)return'bl';return null;};
+function checkSeq(t){
+  const h=[];for(let i=S.taps.length-1;i>=0&&h.length<6;i--){const a=S.taps[i];const ly=LAYER[a.part];if(h.length&&h[h.length-1].ly===ly){h[h.length-1].t=a.t;continue;}
+    if(h.length&&h[h.length-1].t-a.t>2600)break;h.push({ly,t:a.t});}
+  const seq=h.map(x=>x.ly).reverse();
+  if(seq.length===6){if(seq.every((v,i)=>v===PERFECT[i]))return SEC.perfect;if(seq.every((v,i)=>v===REVERSED[i]))return SEC.reversed;}
+  const L=S.taps.slice(-4);
+  if(L.length===4&&t-L[0].t<4000&&L.every((a,i)=>a.part===(i%2?'legR':'legL'))&&L.every((a,i)=>i===0||a.t-L[i-1].t<1300))return SEC.moonwalk;
+  return null;
+}
+function checkCombo(part,t){
+  if(t-S.lastCombo<1300)return null;
+  const prev=S.taps[S.taps.length-2];if(!prev||part==='bg'||prev.part==='bg'||t-prev.t>900)return null;
+  const a=prev.part,b=part;
+  for(const [p,q,k] of PAIRS)if((a===p&&b===q)||(a===q&&b===p))return CMB[k];
+  const eye=x=>x==='eyeL'||x==='eyeR';
+  if((eye(a)&&b==='mouth')||(a==='mouth'&&eye(b)))return CMB.party;
+  const l3=S.taps.slice(-3);
+  if(l3.length===3&&t-l3[0].t<1500){const s=new Set(l3.map(x=>x.part));if(s.size===3&&!s.has('bg'))return CMB.magic;}
+  return null;
+}
+function onTap(g){
+  const t=nowMs(),part=g.part;
+  S.taps.push({t,part,x:g.x,y:g.y});S.taps=S.taps.filter(a=>t-a.t<12000);
+  FX.ring(g.x,g.y,'rgba(255,255,255,.8)',10);
+  // ingrédient en plein vol
+  if(part!=='bg'&&S.fl[part]&&t<S.fl[part]){delete S.fl[part];play(SEC.catch,{part});return;}
+  const sq=checkSeq(t);if(sq){S.taps.length=0;play(sq);return;}
+  if(part==='bg'){
+    const c=CORN(g.x,g.y);
+    if(c){S.corners=S.corners.filter(q=>t-q.t<10000);if(!S.corners.some(q=>q.c===c))S.corners.push({c,t});if(S.corners.length>=4){S.corners=[];play(SEC.corners);return;}}
+  }
+  const recent=S.taps.filter(a=>t-a.t<6000).length;
+  if(recent<4){S.b10=0;S.b25=0;}
+  if(recent>=25&&!S.b25){S.b25=1;S.b10=1;play(SEC.explosion);return;}
+  if(recent>=10&&!S.b10){S.b10=1;play(GST.lose);return;}
+  const cb=checkCombo(part,t);if(cb){S.lastCombo=t;play(cb);return;}
+  const prev=S.taps[S.taps.length-2];
+  if(prev&&t-prev.t<330&&GROUP[prev.part]===GROUP[part]&&Math.hypot(prev.x-g.x,prev.y-g.y)<70){play(GST['dbl_'+GROUP[part]]);return;}
+  if(part!=='bg'){
+    const roll=Math.random();
+    if(roll<.02){play(SEC.gold);return;}
+    if(roll<.035){play(SEC.rainbow);return;}
+    if(roll<.05){play(SEC.minis);return;}
+  }
+  if(part==='bg'){const cx=at('root').x;play(pick(PHYSL),{dir:g.x>cx?1:-1,x:g.x,y:g.y});return;}
+  const pl=POOL[part];if(pl&&pl.length)play(pick(pl),{part,x:g.x,y:g.y});
+}
+
+addEventListener('keydown',e=>{if(e.key==='Escape')closeCodex();});
+['gesturestart','gesturechange','contextmenu','dragstart'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
+
+/* ---------- direction d’orchestre : clignements, sommeil, indices ---------- */
+function director(ts){
+  const now=nowMs();
+  if(S.shake.u>now&&!RED()){const a=S.shake.a*(S.shake.u-now)/400>S.shake.a?S.shake.a:S.shake.a;world.style.transform='translate('+rnd(-a,a).toFixed(1)+'px,'+rnd(-a,a).toFixed(1)+'px)';S.shaking=true;}
+  else if(S.shaking){world.style.transform='';S.shaking=false;}
+  if(ts>S.nextBlink){S.nextBlink=ts+rnd(2200,5200);if(!S.asleep)expr({lids:1},110);}
+  if(document.hidden){S.lastTouch=now;return;}
+  const idle=(now-S.lastTouch)/1000;
+  if(!S.hinted&&idle>8&&S.idleStage===0&&!codexOpen){S.hinted=true;say('Touche-moi !',1800);}
+  if(codexOpen){S.lastTouch=now;return;}
+  if(S.idleStage===0&&idle>16){S.idleStage=1;S.asleep=true;play(SEC.sleep);}
+  else if(S.idleStage===1&&idle>28){S.idleStage=2;play(SEC.dream);}
+  else if(S.idleStage===2&&idle>40){S.idleStage=3;play(SEC.dance);}
+}
+document.addEventListener('visibilitychange',()=>{S.lastTouch=nowMs();});
+
+/* ---------- interface : compteur, toast, carnet ---------- */
+const CATS=[['all','Tout','⭐'],['touch','Toucher','👆'],['pull','Étirer','🧲'],['face','Visage','🤪'],['phys','Physique','🏀'],['ingr','Ingrédients','🧀'],['music','Musique','🎵'],['gest','Gestes','✋'],['secret','Secrets','🔮'],['combo','Combos','⚡']];
+const CATNAME={};CATS.forEach(c=>CATNAME[c[0]]=c[1]);
+const LABEL={bunTop:'le pain du dessus',seed:'une graine de sésame',bunBottom:'le pain du dessous',lettuce:'la salade',tomato:'la tomate',cheese:'le fromage',patty:'le steak',armL:'le bras gauche',armR:'le bras droit',legL:'la jambe gauche',legR:'la jambe droite',eyeL:'l’œil gauche',eyeR:'l’œil droit',mouth:'la bouche',nose:'le nez',cheekL:'la joue gauche',cheekR:'la joue droite',brow:'les sourcils',eye:'un œil'};
+const DIRTXT={up:' vers le haut',down:' vers le bas',side:' sur le côté',vert:' vers le haut ou le bas',any:''};
+const GHOW={dbl_top:'Touche deux fois de suite le pain du dessus',dbl_face:'Touche deux fois de suite le visage',dbl_ingr:'Touche deux fois la même garniture',dbl_low:'Touche deux fois le pain du bas, un bras ou une jambe',dbl_bg:'Touche deux fois de suite le fond',hold_top:'Maintiens le doigt sur le pain du dessus',hold_face:'Maintiens le doigt sur le visage',hold_ingr:'Maintiens le doigt sur une garniture',hold_low:'Maintiens le doigt sur le pain du bas, un bras ou une jambe',hold_bg:'Maintiens le doigt sur le fond',swipe_h:'Balaie très vite l’écran à l’horizontale',swipe_v:'Balaie très vite l’écran à la verticale',shake:'Secoue vite ton doigt de gauche à droite',circle:'Dessine des cercles avec ton doigt',lose:'Tapote le burger dix fois, vite'};
+const CHOW={eyes:'Touche les deux yeux, l’un après l’autre, très vite',sandwich:'Touche le pain du haut puis celui du bas',swap:'Touche la salade puis le fromage',tango:'Touche la tomate puis le steak',hug:'Touche les deux bras',legs:'Touche les deux jambes',clown:'Touche la bouche puis le nez',hamster:'Touche les deux joues',party:'Touche un œil puis la bouche',magic:'Touche trois parties différentes en moins de 1,5 s'};
+function howOf(r){
+  if(r.cat==='touch'||r.cat==='ingr'||r.cat==='face')return 'Touche '+LABEL[r.part];
+  if(r.cat==='pull')return 'Tire '+LABEL[r.part]+DIRTXT[r.dir];
+  if(r.cat==='phys')return 'Touche le fond d’écran, autour du burger';
+  if(r.cat==='music')return 'Appuie sur 🎵'+(r.parts?' (ou touche '+r.parts.map(p=>LABEL[p]).join(' / ')+')':'');
+  if(r.cat==='gest')return GHOW[r.key];
+  if(r.cat==='combo')return CHOW[r.key];
+  return '';
+}
+function updateCount(){
+  const n=Object.keys(SAVE.found).filter(id=>LIB.some(r=>r.id===id)).length;
+  $('#cntN').textContent=n;$('#cntT').textContent=LIB.length;
+  const bar=$('#cxBar');if(bar)bar.style.width=(n/LIB.length*100)+'%';
+  return n;
+}
+let toastTm=null;
+function toast(r){
+  const el=$('#toast');const n=updateCount();
+  el.className='';el.classList.add('show');if(r.secret)el.classList.add('sec');
+  el.textContent=(r.secret?'🔮 Secret découvert : ':'✨ Nouveau : ')+r.name+'  ('+n+' / '+LIB.length+')';
+  clearTimeout(toastTm);toastTm=setTimeout(()=>el.classList.remove('show'),2600);
+  if(navigator.vibrate){try{navigator.vibrate(r.secret?[30,40,30]:15)}catch(e){}}
+}
+let codexOpen=false,codexTab='all';
+function renderCodex(){
+  const n=updateCount();
+  const tabs=$('#cxTabs');tabs.innerHTML='';
+  for(const [k,name,ic] of CATS){
+    const list=k==='all'?LIB:LIB.filter(r=>r.cat===k);const got=list.filter(found).length;
+    const b=document.createElement('button');b.className='tab'+(k===codexTab?' on':'');b.textContent=ic+' '+name+' '+got+'/'+list.length;
+    b.addEventListener('click',()=>{codexTab=k;renderCodex();});tabs.appendChild(b);
+  }
+  const list=$('#cxList');list.innerHTML='';
+  const items=codexTab==='all'?LIB:LIB.filter(r=>r.cat===codexTab);
+  for(const r of items){
+    const f=found(r);const d=document.createElement('div');
+    d.className='it '+(f?'found':'lock')+(r.secret?' secret':'');
+    let ic=f?'✅':(r.secret?'❓':'🔒'),name,desc,extra;
+    if(f){name=r.name;desc=r.desc;extra='Découverte · '+CATNAME[r.cat];}
+    else if(r.secret){name='??? (secret)';desc='Réaction secrète à découvrir.';extra='Indice : '+r.hint;}
+    else{name=r.name;desc='Pas encore découverte.';extra='Comment ? '+howOf(r)+' · '+CATNAME[r.cat];}
+    d.innerHTML='<div class="ic">'+ic+'</div><div class="tx"><b></b><span></span><em></em></div>';
+    d.querySelector('b').textContent=name;d.querySelector('span').textContent=desc;d.querySelector('em').textContent=extra;
+    if(f){const bt=document.createElement('button');bt.className='rp';bt.textContent='▶';bt.setAttribute('aria-label','Rejouer');bt.addEventListener('click',()=>{closeCodex();setTimeout(()=>{touch();play(r,{part:r.part||'bunTop',dx:0,dy:0,dir:1});},250);});d.appendChild(bt);}
+    list.appendChild(d);
+  }
+  $('#optSound').textContent=(Snd.on?'🔊':'🔇')+' Son : '+(Snd.on?'oui':'non');
+  $('#optSound').classList.toggle('on',Snd.on);
+  $('#optMotion').classList.toggle('on',RED());
+  $('#optMotion').textContent='🐢 Animations réduites : '+(RED()?'oui':'non');
+}
+function openCodex(){codexOpen=true;$('#codex').classList.add('open');renderCodex();}
+function closeCodex(){codexOpen=false;$('#codex').classList.remove('open');}
+function applySound(){const b=$('#btnSound');b.textContent=Snd.on?'🔊':'🔇';b.setAttribute('aria-pressed',String(Snd.on));}
+function applyMotion(){document.body.classList.toggle('reduced',RED());}
+function toggleSound(){Snd.on=!Snd.on;SAVE.sound=Snd.on;save();applySound();if(Snd.on){Snd.unlock();Snd.play('pop');}if(codexOpen)renderCodex();}
+
+function setupUI(){
+  $('#cnt').addEventListener('click',openCodex);
+  $('#cxClose').addEventListener('click',closeCodex);
+  $('#codex').addEventListener('click',e=>{if(e.target.id==='codex')closeCodex();});
+  $('#btnSound').addEventListener('click',toggleSound);
+  $('#optSound').addEventListener('click',toggleSound);
+  $('#optMotion').addEventListener('click',()=>{SAVE.reduced=!RED();save();applyMotion();renderCodex();});
+  $('#optReset').addEventListener('click',()=>{if(confirm('Effacer toute ta progression ?')){SAVE.found={};save();renderCodex();updateCount();}});
+  $('#btnMusic').addEventListener('click',()=>{Snd.unlock();touch();play(pick(MUSL),{});});
+  const fl=$('#floaters');const em=['🍟','🥤','🍅','🥬','🧀','🍔','🌭','🍕'];
+  for(let i=0;i<12;i++){const s=document.createElement('span');s.textContent=em[i%em.length];s.style.left=(i*8.5+Math.random()*4)+'%';s.style.animationDuration=(14+Math.random()*16)+'s';s.style.animationDelay=(-Math.random()*20)+'s';fl.appendChild(s);}
+  applySound();applyMotion();updateCount();
+  setTimeout(()=>{const i=$('#intro');if(i)i.style.opacity=0;},7000);
+}
+
+/* ---------- boucle principale ---------- */
+let lastTs=0;
+function loop(ts){
+  const dt=Math.min(.05,(ts-lastTs)/1000||.016);lastTs=ts;
+  step(dt,ts);render(ts);FX.update(dt);FX.draw();director(ts);
+  requestAnimationFrame(loop);
+}
+function boot(){
+  setupUI();render(0);
+  setTimeout(()=>say('Touche-moi, tire-moi, secoue-moi !',3200),500);
+  requestAnimationFrame(loop);
+}
+if(window.__TEST){window.__G={LIB,CNT,EXPECT,makeCtx,S,play,POOL,SAVE,GST,SEC,CMB,PHYSL,MUSL,PULLS,howOf,AX,SP};}
+else boot();
+})();
+</script>
+</body>
+</html>
